@@ -107,7 +107,7 @@ evaluation:
 # ─────────────────────────────────────────────
 wandb:
   project: lyrevoice
-  entity: null              # Set to your WandB username
+  entity: greemwahr              # Set to your WandB username
   run_name: null            # Auto-generated if null
 
 # ─────────────────────────────────────────────
