@@ -157,12 +157,14 @@ uv run ruff format .
 
 | Dimension          | Metric                        | Description                                      |
 |--------------------|-------------------------------|--------------------------------------------------|
-| Audio naturalness  | UTMOS                         | Neural MOS predictor, no human raters needed.    |
-|                    |                               | Scale 1-5, higher is better                      |
 | Speaker similarity | Speaker Cosine Similarity     | Resemblyzer embeddings of generated vs real      |
 |                    |                               | voice compared via cosine similarity (0-1)       |
 | GAN quality        | FAD (Fréchet Audio Distance)  | Audio equivalent of FID, measures statistical    |
 |                    |                               | similarity between real and generated audio      |
+
+> **Note:** UTMOS22 was evaluated and permanently dropped -- its packaging is broken
+> (poetry cannot find the module source files) and it is unmaintained.
+> FAD + Speaker Cosine Similarity provide sufficient quantitative evaluation.
 
 ---
 

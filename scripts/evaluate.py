@@ -66,32 +66,6 @@ def compute_speaker_similarity(
     return max(0.0, cosine_sim)
 
 
-# ─────────────────────────────────────────────
-# Metric: UTMOS
-# ─────────────────────────────────────────────
-
-def compute_utmos(audio_paths: list, device: torch.device) -> float:
-    """
-    Compute mean UTMOS score over a list of audio files.
-    UTMOS is a neural MOS predictor trained on human speech quality ratings.
-    Scale: 1-5 (higher = more natural).
-
-    Requires manual install (incompatible with uv dependency resolver):
-      uv pip install git+https://github.com/sarulab-speech/UTMOS22.git
-    """
-    try:
-        import utmos22
-        predictor = utmos22.Score(device=str(device))
-        scores = []
-        for path in tqdm(audio_paths, desc="Computing UTMOS"):
-            score = predictor.score(path)
-            scores.append(score)
-        return float(np.mean(scores))
-    except ImportError:
-        print("UTMOS skipped: install with "
-              "'uv pip install git+https://github.com/sarulab-speech/UTMOS22.git'")
-        return None
-
 
 # ─────────────────────────────────────────────
 # Metric: FAD (Fréchet Audio Distance)
@@ -220,12 +194,6 @@ def main():
     std_sim = np.std(similarity_scores)
     print(f"Speaker Cosine Similarity: {mean_sim:.4f} ± {std_sim:.4f}")
 
-    # UTMOS
-    generated_wav_paths = sorted(generated_dir.glob("*.wav"))
-    utmos_score = compute_utmos([str(p) for p in generated_wav_paths], device)
-    if utmos_score is not None:
-        print(f"UTMOS (MOS):               {utmos_score:.4f} / 5.0")
-
     # FAD
     fad_score = compute_fad(str(generated_dir), str(reference_dir))
     if fad_score is not None:
@@ -241,7 +209,6 @@ def main():
             "mean": float(mean_sim),
             "std": float(std_sim),
         },
-        "utmos": float(utmos_score) if utmos_score is not None else None,
         "fad": float(fad_score) if fad_score is not None else None,
     }
 
