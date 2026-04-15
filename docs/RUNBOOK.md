@@ -86,9 +86,36 @@ You need both VCTK (multi-speaker, for GAN training) and LJSpeech (single-speake
 
 ### 4a. VCTK Dataset (~11 GB)
 
-1. Go to: https://datashare.ed.ac.uk/handle/10283/3443
-2. Download `VCTK-Corpus-0.92.zip`
-3. Extract to `data/datasets/`:
+**Option 1: wget (resumable -- recommended)**
+```bash
+mkdir -p data/datasets
+wget -c -P data/datasets \
+  https://datashare.ed.ac.uk/bitstream/handle/10283/3443/VCTK-Corpus-0.92.zip
+```
+
+**Option 2: aria2c (parallel connections -- fastest)**
+```bash
+# Install aria2 first if needed:  brew install aria2  /  sudo apt install aria2
+mkdir -p data/datasets
+aria2c -x 16 -s 16 -d data/datasets \
+  https://datashare.ed.ac.uk/bitstream/handle/10283/3443/VCTK-Corpus-0.92.zip
+```
+`-x 16 -s 16` opens 16 parallel connections to the same server -- significantly faster for large files.
+
+**Option 3: curl (resumable)**
+```bash
+mkdir -p data/datasets
+curl -L -C - -o data/datasets/VCTK-Corpus-0.92.zip \
+  https://datashare.ed.ac.uk/bitstream/handle/10283/3443/VCTK-Corpus-0.92.zip
+```
+
+> All three options support resuming an interrupted download.
+> Re-run the same command and it will continue from where it left off.
+
+**Extract:**
+```bash
+unzip data/datasets/VCTK-Corpus-0.92.zip -d data/datasets/
+```
 
 ```bash
 mkdir -p data/datasets
