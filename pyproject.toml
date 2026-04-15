@@ -35,15 +35,11 @@ dependencies = [
     "matplotlib>=3.7.0",
 ]
 
-[tool.uv.sources]
-# UTMOS installed from git -- no PyPI release (package name inside repo is utmos22)
-utmos22 = { git = "https://github.com/sarulab-speech/UTMOS22.git" }
-
 [dependency-groups]
 dev = [
     "ruff>=0.4.0",
-    "utmos22",
-]
+    # utmos22 has broken package metadata and cannot be installed via uv.
+    # Install manually after uv sync: see docs/RUNBOOK.md Step 3b
 
 # ─────────────────────────────────────────────
 # Ruff -- linting and formatting
