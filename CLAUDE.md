@@ -179,9 +179,10 @@ Lambda schedule:
 
 | Metric | Tool | Scale | Goal |
 |--------|------|-------|------|
-| Audio naturalness | UTMOS | 1-5 | Higher |
 | GAN output quality | FAD (Fréchet Audio Distance) | 0-∞ | Lower |
 | Voice cloning accuracy | Speaker Cosine Similarity (Resemblyzer) | 0-1 | Higher |
+
+UTMOS22 permanently dropped -- broken packaging, unmaintained. User approved.
 
 ---
 

@@ -60,19 +60,6 @@ uv sync --group dev
 This installs all core dependencies plus ruff.
 uv creates a virtual environment automatically at `.venv/`.
 
-### 3b. Install UTMOS manually
-
-UTMOS22 has a package name mismatch that breaks uv's dependency resolver.
-Install it directly after `uv sync`:
-
-```bash
-uv pip install git+https://github.com/sarulab-speech/UTMOS22.git
-```
-
-> This works on Python 3.10 (pinned by `.python-version`).
-> If you skip this step, UTMOS scoring is skipped automatically
-> and evaluation runs with FAD + Speaker Cosine Similarity only.
-
 Verify the environment is working:
 ```bash
 uv run python -c "import torch; print(torch.__version__)"
