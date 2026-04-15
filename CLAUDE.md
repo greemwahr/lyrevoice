@@ -188,5 +188,6 @@ Lambda schedule:
 ## Git Rules
 
 - **Always commit changes** after completing any task
-- **Never push** -- the user handles all pushes manually
+- **Always push** commits to the current feature branch after committing
+- **Never push to `main`** -- only the user pushes to main directly
 - Active development branch: `claude/count-repo-files-Pa8A5`
