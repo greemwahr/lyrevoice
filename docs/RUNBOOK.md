@@ -11,7 +11,7 @@ Step-by-step guide to go from a fresh clone to a trained, running voice cloning 
 | OS | macOS 13+, Ubuntu 20.04+, Windows 11 (WSL2) | macOS 14+ / Ubuntu 22.04 |
 | RAM | 16 GB | 24 GB |
 | Disk space | 25 GB free | 50 GB free |
-| Python | 3.10+ | 3.11 |
+| Python | 3.10 | 3.10 (pinned via `.python-version`) |
 | GPU | None (CPU works, very slow) | Apple M2/M3, NVIDIA GPU (CUDA 11.8+) |
 
 > **Apple M2 users:** Training uses MPS (Metal Performance Shaders) automatically.
@@ -112,11 +112,6 @@ curl -L -o data/datasets/VCTK-Corpus-0.92.zip \
 **Extract:**
 ```bash
 unzip data/datasets/VCTK-Corpus-0.92.zip -d data/datasets/
-```
-
-```bash
-mkdir -p data/datasets
-unzip VCTK-Corpus-0.92.zip -d data/datasets/
 # Result: data/datasets/VCTK-Corpus/
 ```
 
