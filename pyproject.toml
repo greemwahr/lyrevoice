@@ -40,6 +40,7 @@ dev = [
     "ruff>=0.4.0",
     # utmos22 has broken package metadata and cannot be installed via uv.
     # Install manually after uv sync: see docs/RUNBOOK.md Step 3b
+]
 
 # ─────────────────────────────────────────────
 # Ruff -- linting and formatting
