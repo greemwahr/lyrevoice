@@ -75,6 +75,9 @@ def compute_utmos(audio_paths: list, device: torch.device) -> float:
     Compute mean UTMOS score over a list of audio files.
     UTMOS is a neural MOS predictor trained on human speech quality ratings.
     Scale: 1-5 (higher = more natural).
+
+    Requires manual install (incompatible with uv dependency resolver):
+      uv pip install git+https://github.com/sarulab-speech/UTMOS22.git
     """
     try:
         import utmos22
@@ -85,8 +88,8 @@ def compute_utmos(audio_paths: list, device: torch.device) -> float:
             scores.append(score)
         return float(np.mean(scores))
     except ImportError:
-        print("utmos22 not installed. Run: uv sync --group dev")
-        print("Skipping UTMOS evaluation.")
+        print("UTMOS skipped: install with "
+              "'uv pip install git+https://github.com/sarulab-speech/UTMOS22.git'")
         return None
 
 

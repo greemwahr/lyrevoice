@@ -62,16 +62,16 @@ uv creates a virtual environment automatically at `.venv/`.
 
 ### 3b. Install UTMOS manually
 
-UTMOS22 has inconsistent package metadata and cannot be installed via uv directly.
-Install it manually into the project virtual environment:
+UTMOS22 has a package name mismatch that breaks uv's dependency resolver.
+Install it directly after `uv sync`:
 
 ```bash
-.venv/bin/pip install git+https://github.com/sarulab-speech/UTMOS22.git
+uv pip install git+https://github.com/sarulab-speech/UTMOS22.git
 ```
 
-> UTMOS is only needed for evaluation (`scripts/evaluate.py`).
-> If you skip this step, UTMOS scoring will be skipped automatically
-> and the other two metrics (FAD, Speaker Cosine Similarity) will still run.
+> This works on Python 3.10 (pinned by `.python-version`).
+> If you skip this step, UTMOS scoring is skipped automatically
+> and evaluation runs with FAD + Speaker Cosine Similarity only.
 
 Verify the environment is working:
 ```bash

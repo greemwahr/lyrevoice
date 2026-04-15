@@ -155,14 +155,14 @@ uv run ruff format .
 
 ## 5. Evaluation Metrics
 
-| Dimension        | Metric                          | Description                                      |
-|------------------|---------------------------------|--------------------------------------------------|
-| Audio quality    | UTMOS                           | Neural MOS predictor, no human raters needed     |
-| Speaker similarity | Speaker Embedding Cosine      | Resemblyzer embeddings of generated vs real      |
-|                  | Similarity                      | voice compared via cosine similarity             |
-| GAN quality      | FAD (Fréchet Audio Distance)    | Audio equivalent of FID, measures statistical    |
-|                  |                                 | similarity between real and generated            |
-|                  |                                 | mel-spectrograms                                 |
+| Dimension          | Metric                        | Description                                      |
+|--------------------|-------------------------------|--------------------------------------------------|
+| Audio naturalness  | UTMOS                         | Neural MOS predictor, no human raters needed.    |
+|                    |                               | Scale 1-5, higher is better                      |
+| Speaker similarity | Speaker Cosine Similarity     | Resemblyzer embeddings of generated vs real      |
+|                    |                               | voice compared via cosine similarity (0-1)       |
+| GAN quality        | FAD (Fréchet Audio Distance)  | Audio equivalent of FID, measures statistical    |
+|                    |                               | similarity between real and generated audio      |
 
 ---
 
