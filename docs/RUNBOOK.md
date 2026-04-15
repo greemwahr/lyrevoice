@@ -149,23 +149,21 @@ The checkpoint will be saved to `checkpoints/pretrained/tacotron2_statedict.pt`.
 
 ### 5b. HiFi-GAN Vocoder (~14 MB)
 
-**Generator weights -- manual browser download:**
+**Download both files from the official Google Drive folder:**
 
 1. Open the official Google Drive folder:
    https://drive.google.com/drive/folders/1-eEYTB5Av9jNql0WGBlRoi-WH2J7bp5Y?usp=sharing
-2. Open the **`LJ_FT_T2_V1`** folder -- this is V1 fine-tuned with Tacotron2, which matches our generator
-3. Download the `generator` file from inside that folder
-4. Move it to the correct location:
+2. Open the **`LJ_FT_T2_V1`** folder -- V1 fine-tuned with Tacotron2, matches our generator
+3. Download both `generator` and `config.json` from inside that folder
+4. Move them to the correct locations:
 ```bash
 mkdir -p checkpoints/pretrained
-mv ~/Downloads/generator checkpoints/pretrained/hifigan_generator.pt
+mv ~/Downloads/generator   checkpoints/pretrained/hifigan_generator.pt
+mv ~/Downloads/config.json checkpoints/pretrained/hifigan_config.json
 ```
 
-**Config file -- direct download (verified working):**
-```bash
-curl -L https://raw.githubusercontent.com/jik876/hifi-gan/master/config_v1.json \
-     -o checkpoints/pretrained/hifigan_config.json
-```
+> Use the `config.json` from the Drive folder, not the one from GitHub --
+> it is guaranteed to match the downloaded weights exactly.
 
 ---
 
