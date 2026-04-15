@@ -176,9 +176,8 @@ lyrevoice/
 
 ## 7. Deployment
 
-- **Development/Demo:** Local Gradio server on M2 MacBook (`python app/app.py`)
-- **Production:** Self-hosted on personal server behind Nginx reverse proxy
-- **Presentation:** HuggingFace Spaces for shareable class demo
+- **Development:** Local Gradio server on M2 MacBook (`python app/app.py`)
+- **Production/Demo:** Self-hosted on personal server behind Nginx reverse proxy -- shared URL used for both production and class presentation
 
 ---
 
