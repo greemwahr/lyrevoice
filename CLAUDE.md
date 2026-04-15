@@ -185,6 +185,8 @@ Lambda schedule:
 
 ---
 
-## Git Branch
+## Git Rules
 
-Active development branch: `claude/count-repo-files-Pa8A5`
+- **Always commit changes** after completing any task
+- **Never push** -- the user handles all pushes manually
+- Active development branch: `claude/count-repo-files-Pa8A5`
