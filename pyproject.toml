@@ -36,13 +36,13 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-# UTMOS installed from git -- no PyPI release
-utmos = { git = "https://github.com/sarulab-speech/UTMOS22.git" }
+# UTMOS installed from git -- no PyPI release (package name inside repo is utmos22)
+utmos22 = { git = "https://github.com/sarulab-speech/UTMOS22.git" }
 
 [dependency-groups]
 dev = [
     "ruff>=0.4.0",
-    "utmos",
+    "utmos22",
 ]
 
 # ─────────────────────────────────────────────

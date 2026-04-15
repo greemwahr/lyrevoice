@@ -77,15 +77,15 @@ def compute_utmos(audio_paths: list, device: torch.device) -> float:
     Scale: 1-5 (higher = more natural).
     """
     try:
-        import utmos
-        predictor = utmos.Score(device=str(device))
+        import utmos22
+        predictor = utmos22.Score(device=str(device))
         scores = []
         for path in tqdm(audio_paths, desc="Computing UTMOS"):
             score = predictor.score(path)
             scores.append(score)
         return float(np.mean(scores))
     except ImportError:
-        print("UTMOS not installed. Run: pip install utmos")
+        print("utmos22 not installed. Run: uv sync --group dev")
         print("Skipping UTMOS evaluation.")
         return None
 
