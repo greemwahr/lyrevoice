@@ -126,8 +126,30 @@ All schedule values are configurable via `configs/config.yaml`.
 | Config management   | PyYAML                    | All hyperparameters in config.yaml         |
 | App UI              | Gradio                    | Self-hostable, open source (Apache 2.0)    |
 | Audio recording     | Gradio built-in           | gr.Audio(source="microphone")              |
+| Package manager     | uv (Astral)               | Replaces pip; pyproject.toml as single     |
+|                     |                           | source of truth for dependencies           |
+| Linter/Formatter    | Ruff (Astral)             | Replaces flake8, black, isort; configured  |
+|                     |                           | in pyproject.toml                          |
 
 **Development Environment:** Apple M2 MacBook Air 24GB
+
+### Package Management Commands
+
+```bash
+# Install all dependencies
+uv sync
+
+# Install including dev tools (ruff, utmos)
+uv sync --group dev
+
+# Run a script
+uv run python scripts/train.py
+uv run python app/app.py
+
+# Lint and format
+uv run ruff check .
+uv run ruff format .
+```
 
 ---
 

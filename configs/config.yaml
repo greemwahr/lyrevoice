@@ -1,0 +1,118 @@
+# LyreVoice Configuration
+# All hyperparameters and training settings live here.
+# Edit this file to experiment without touching model code.
+
+# ─────────────────────────────────────────────
+# Audio
+# ─────────────────────────────────────────────
+audio:
+  sample_rate: 22050
+  n_mels: 80              # Number of mel filterbanks
+  n_fft: 1024             # FFT window size
+  hop_length: 256         # Frames between STFT columns
+  win_length: 1024        # STFT window length
+  fmin: 0                 # Minimum mel frequency
+  fmax: 8000              # Maximum mel frequency
+  max_wav_value: 32768.0  # For audio normalization
+
+# ─────────────────────────────────────────────
+# Dataset
+# ─────────────────────────────────────────────
+data:
+  vctk_path: data/datasets/VCTK-Corpus
+  ljspeech_path: data/datasets/LJSpeech-1.1
+  preprocessed_path: data/preprocessed
+  train_split: 0.95
+  val_split: 0.05
+  max_wav_length: 10      # Max audio clip length in seconds
+
+# ─────────────────────────────────────────────
+# Speaker Encoder (Resemblyzer - frozen)
+# ─────────────────────────────────────────────
+speaker_encoder:
+  embedding_dim: 256      # Resemblyzer output embedding size
+  num_sample_sentences: 3 # Number of sentences to enroll a speaker
+
+# ─────────────────────────────────────────────
+# Generator (Tacotron2 backbone)
+# ─────────────────────────────────────────────
+generator:
+  tacotron2_checkpoint: checkpoints/pretrained/tacotron2_statedict.pt
+  speaker_embedding_dim: 256   # Must match speaker_encoder.embedding_dim
+  # Tacotron2 internal dims (NVIDIA defaults kept)
+  encoder_embedding_dim: 512
+  attention_rnn_dim: 1024
+  decoder_rnn_dim: 1024
+  prenet_dim: 256
+  max_decoder_steps: 1000
+  gate_threshold: 0.5
+  p_attention_dropout: 0.1
+  p_decoder_dropout: 0.1
+
+# ─────────────────────────────────────────────
+# Discriminator (Multi-Scale CNN - from scratch)
+# ─────────────────────────────────────────────
+discriminator:
+  num_scales: 3           # Number of discriminator scales
+  base_channels: 32       # CNN base channel count
+  max_channels: 512       # CNN max channel count
+  kernel_size: 5
+  stride: 2
+  downsample_factor: 2    # Downsampling between scales
+
+# ─────────────────────────────────────────────
+# Training
+# ─────────────────────────────────────────────
+training:
+  batch_size: 16
+  num_epochs: 100
+  learning_rate_generator: 0.0001
+  learning_rate_discriminator: 0.0004
+  adam_beta1: 0.5
+  adam_beta2: 0.9
+  grad_clip_threshold: 1.0
+  checkpoint_interval: 10   # Save checkpoint every N epochs
+  log_interval: 100         # Log to WandB every N steps
+  sample_interval: 500      # Generate voice sample every N steps
+  num_workers: 4            # DataLoader workers
+
+  # Lambda schedule (3-phase curriculum)
+  lambda_schedule:
+    - epoch: 1
+      lambda_reconstruction: 10.0
+      lambda_speaker: 0.1
+    - epoch: 31
+      lambda_reconstruction: 7.0
+      lambda_speaker: 0.5
+    - epoch: 61
+      lambda_reconstruction: 5.0
+      lambda_speaker: 1.0
+
+# ─────────────────────────────────────────────
+# Vocoder (HiFi-GAN - frozen pretrained)
+# ─────────────────────────────────────────────
+vocoder:
+  checkpoint: checkpoints/pretrained/hifigan_generator.pt
+  config: checkpoints/pretrained/hifigan_config.json
+
+# ─────────────────────────────────────────────
+# Evaluation
+# ─────────────────────────────────────────────
+evaluation:
+  output_dir: eval/outputs
+  num_samples: 50           # Number of samples for FAD/UTMOS evaluation
+
+# ─────────────────────────────────────────────
+# WandB Monitoring
+# ─────────────────────────────────────────────
+wandb:
+  project: lyrevoice
+  entity: null              # Set to your WandB username
+  run_name: null            # Auto-generated if null
+
+# ─────────────────────────────────────────────
+# Paths
+# ─────────────────────────────────────────────
+paths:
+  checkpoints: checkpoints/training
+  logs: logs

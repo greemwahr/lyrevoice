@@ -1,0 +1,85 @@
+[project]
+name = "lyrevoice"
+version = "0.1.0"
+description = "AI-powered voice cloning GAN for LIAI 1009 - Deep Learning"
+requires-python = ">=3.10"
+
+dependencies = [
+    # Core framework
+    "torch>=2.1.0",
+    "torchaudio>=2.1.0",
+
+    # Audio processing
+    "librosa>=0.10.0",
+    "soundfile>=0.12.1",
+
+    # Speaker encoder
+    "resemblyzer>=0.1.1.dev0",
+
+    # Config management
+    "pyyaml>=6.0",
+
+    # Training monitoring
+    "wandb>=0.16.0",
+
+    # App UI
+    "gradio>=4.0.0",
+
+    # Evaluation
+    "frechet-audio-distance>=0.0.4",
+
+    # Utilities
+    "numpy>=1.24.0",
+    "scipy>=1.11.0",
+    "tqdm>=4.65.0",
+    "matplotlib>=3.7.0",
+]
+
+[tool.uv.sources]
+# UTMOS installed from git -- no PyPI release
+utmos = { git = "https://github.com/sarulab-speech/UTMOS22.git" }
+
+[dependency-groups]
+dev = [
+    "ruff>=0.4.0",
+    "utmos",
+]
+
+# ─────────────────────────────────────────────
+# Ruff -- linting and formatting
+# ─────────────────────────────────────────────
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = [
+    ".git",
+    "__pycache__",
+    "checkpoints",
+    "data/datasets",
+    "data/preprocessed",
+    "eval",
+    "logs",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+]
+ignore = [
+    "E501",  # line too long -- handled by formatter
+    "B008",  # do not perform function calls in argument defaults (Gradio pattern)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["models", "data", "training", "app"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
