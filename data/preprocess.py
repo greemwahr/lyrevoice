@@ -121,7 +121,7 @@ def preprocess_vctk(config: dict) -> None:
             audio = trim_silence(audio, audio_cfg["sample_rate"])
 
             # Skip clips that are too long
-            max_samples = audio_cfg["max_wav_length"] * audio_cfg["sample_rate"]
+            max_samples = data_cfg["max_wav_length"] * audio_cfg["sample_rate"]
             if len(audio) > max_samples:
                 continue
 
@@ -206,7 +206,7 @@ def preprocess_ljspeech(config: dict) -> None:
         audio = load_audio(str(wav_file), audio_cfg["sample_rate"])
         audio = trim_silence(audio, audio_cfg["sample_rate"])
 
-        max_samples = audio_cfg["max_wav_length"] * audio_cfg["sample_rate"]
+        max_samples = data_cfg["max_wav_length"] * audio_cfg["sample_rate"]
         if len(audio) > max_samples:
             continue
 
