@@ -179,10 +179,9 @@ Lambda schedule:
 
 | Metric | Tool | Scale | Goal |
 |--------|------|-------|------|
+| Audio naturalness | UTMOS | 1-5 | Higher |
 | GAN output quality | FAD (Fréchet Audio Distance) | 0-∞ | Lower |
 | Voice cloning accuracy | Speaker Cosine Similarity (Resemblyzer) | 0-1 | Higher |
-
-UTMOS was dropped -- it pins torch==1.11.0 which is incompatible with Python 3.11+.
 
 ---
 
