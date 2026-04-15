@@ -73,36 +73,40 @@ You need both VCTK (multi-speaker, for GAN training) and LJSpeech (single-speake
 
 ### 4a. VCTK Dataset (~11 GB)
 
-The Edinburgh DataShare server does not support range requests, so parallel
-download tools like aria2c will fail. Use wget or curl instead.
+**Kaggle (recommended -- fastest download):**
 
-**wget (recommended):**
+The dataset at https://www.kaggle.com/datasets/asadsama/vctk-corpus contains the correct
+`wav48_silence_trimmed/` structure with FLAC files. Requires a free Kaggle account and
+API token configured at `~/.kaggle/kaggle.json`.
+
 ```bash
 mkdir -p data/datasets
-wget -P data/datasets \
-  https://datashare.ed.ac.uk/bitstream/handle/10283/3443/VCTK-Corpus-0.92.zip
+uvx kaggle datasets download -d asadsama/vctk-corpus -p data/datasets/ --unzip
 ```
 
-If the download is interrupted, resume with `-c`:
+After extraction, rename the folder if needed so it matches the expected path:
 ```bash
+# Check what was extracted
+ls data/datasets/
+
+# Rename if the folder name differs from VCTK-Corpus
+mv data/datasets/<extracted-folder-name> data/datasets/VCTK-Corpus
+```
+
+**Edinburgh DataShare (fallback):**
+
+The Edinburgh DataShare server throttles downloads heavily after the first few minutes
+(drops from MB/s to KB/s). Use wget with `-c` to resume if interrupted.
+
+```bash
+mkdir -p data/datasets
 wget -c -P data/datasets \
   https://datashare.ed.ac.uk/bitstream/handle/10283/3443/VCTK-Corpus-0.92.zip
-```
 
-**curl (alternative):**
-```bash
-mkdir -p data/datasets
-curl -L -o data/datasets/VCTK-Corpus-0.92.zip \
-  https://datashare.ed.ac.uk/bitstream/handle/10283/3443/VCTK-Corpus-0.92.zip
-```
-
-**Extract:**
-```bash
 unzip data/datasets/VCTK-Corpus-0.92.zip -d data/datasets/
-# Result: data/datasets/VCTK-Corpus/
 ```
 
-Expected structure:
+Expected structure (both sources):
 ```
 data/datasets/VCTK-Corpus/
 ├── wav48_silence_trimmed/
