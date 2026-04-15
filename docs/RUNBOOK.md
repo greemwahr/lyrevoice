@@ -168,11 +168,15 @@ wget https://raw.githubusercontent.com/jik876/hifi-gan/master/config_v1.json \
 WandB tracks your training losses and lets you listen to generated voice samples in real time.
 
 1. Create a free account at https://wandb.ai
-2. Log in from the terminal:
+2. Get your API key from https://wandb.ai/settings → API keys
+3. Add it to your shell profile:
+
 ```bash
-uv run wandb login
+echo 'export WANDB_API_KEY=your_api_key_here' >> ~/.zshrc
+source ~/.zshrc
 ```
-3. Enter your API key when prompted (found at https://wandb.ai/settings)
+
+> No login command needed -- wandb picks up `WANDB_API_KEY` automatically when training starts.
 
 4. Set your WandB username in `configs/config.yaml`:
 ```yaml
