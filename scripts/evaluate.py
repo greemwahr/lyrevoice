@@ -67,27 +67,18 @@ def compute_speaker_similarity(
 
 
 # ─────────────────────────────────────────────
-# Metric: UTMOS
+# Metric: UTMOS (unavailable on Python 3.11+)
 # ─────────────────────────────────────────────
 
 def compute_utmos(audio_paths: list, device: torch.device) -> float:
     """
-    Compute mean UTMOS score over a list of audio files.
-    UTMOS is a neural MOS predictor trained on human speech quality ratings.
-    Scale: 1-5 (higher = more natural).
+    UTMOS22 pins torch==1.11.0 which is incompatible with Python 3.11+.
+    This function is kept as a stub for future compatibility.
+    Returns None -- evaluation proceeds with FAD and Speaker Cosine Similarity.
     """
-    try:
-        import utmos22
-        predictor = utmos22.Score(device=str(device))
-        scores = []
-        for path in tqdm(audio_paths, desc="Computing UTMOS"):
-            score = predictor.score(path)
-            scores.append(score)
-        return float(np.mean(scores))
-    except ImportError:
-        print("utmos22 not installed. Run: uv sync --group dev")
-        print("Skipping UTMOS evaluation.")
-        return None
+    print("UTMOS skipped: utmos22 is incompatible with Python 3.11+ "
+          "(requires torch==1.11.0). Evaluation uses FAD + Speaker Cosine Similarity.")
+    return None
 
 
 # ─────────────────────────────────────────────

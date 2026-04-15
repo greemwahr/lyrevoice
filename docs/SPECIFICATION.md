@@ -157,12 +157,14 @@ uv run ruff format .
 
 | Dimension        | Metric                          | Description                                      |
 |------------------|---------------------------------|--------------------------------------------------|
-| Audio quality    | UTMOS                           | Neural MOS predictor, no human raters needed     |
 | Speaker similarity | Speaker Embedding Cosine      | Resemblyzer embeddings of generated vs real      |
-|                  | Similarity                      | voice compared via cosine similarity             |
+|                  | Similarity                      | voice compared via cosine similarity (0-1)       |
 | GAN quality      | FAD (Fréchet Audio Distance)    | Audio equivalent of FID, measures statistical    |
-|                  |                                 | similarity between real and generated            |
-|                  |                                 | mel-spectrograms                                 |
+|                  |                                 | similarity between real and generated audio      |
+
+> **Note:** UTMOS22 (MOS predictor) was removed -- it pins `torch==1.11.0` which is
+> incompatible with Python 3.11+. FAD and Speaker Cosine Similarity together
+> provide sufficient quantitative evaluation for this project.
 
 ---
 
