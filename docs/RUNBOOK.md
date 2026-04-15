@@ -81,7 +81,7 @@ API token configured at `~/.kaggle/kaggle.json`.
 
 ```bash
 mkdir -p data/datasets
-uvx kaggle datasets download -d asadsama/vctk-corpus -p data/datasets/ --unzip
+uvx kaggle datasets download -d asadsama/vctk-corpus -p data/datasets/
 ```
 
 After extraction, rename the folder if needed so it matches the expected path:
