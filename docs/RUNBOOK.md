@@ -86,31 +86,28 @@ You need both VCTK (multi-speaker, for GAN training) and LJSpeech (single-speake
 
 ### 4a. VCTK Dataset (~11 GB)
 
-**Option 1: wget (resumable -- recommended)**
+The Edinburgh DataShare server does not support range requests, so parallel
+download tools like aria2c will fail. Use wget or curl instead.
+
+**wget (recommended):**
 ```bash
 mkdir -p data/datasets
+wget -P data/datasets \
+  https://datashare.ed.ac.uk/bitstream/handle/10283/3443/VCTK-Corpus-0.92.zip
+```
+
+If the download is interrupted, resume with `-c`:
+```bash
 wget -c -P data/datasets \
   https://datashare.ed.ac.uk/bitstream/handle/10283/3443/VCTK-Corpus-0.92.zip
 ```
 
-**Option 2: aria2c (parallel connections -- fastest)**
-```bash
-# Install aria2 first if needed:  brew install aria2  /  sudo apt install aria2
-mkdir -p data/datasets
-aria2c -x 16 -s 16 -d data/datasets \
-  https://datashare.ed.ac.uk/bitstream/handle/10283/3443/VCTK-Corpus-0.92.zip
-```
-`-x 16 -s 16` opens 16 parallel connections to the same server -- significantly faster for large files.
-
-**Option 3: curl (resumable)**
+**curl (alternative):**
 ```bash
 mkdir -p data/datasets
-curl -L -C - -o data/datasets/VCTK-Corpus-0.92.zip \
+curl -L -o data/datasets/VCTK-Corpus-0.92.zip \
   https://datashare.ed.ac.uk/bitstream/handle/10283/3443/VCTK-Corpus-0.92.zip
 ```
-
-> All three options support resuming an interrupted download.
-> Re-run the same command and it will continue from where it left off.
 
 **Extract:**
 ```bash
