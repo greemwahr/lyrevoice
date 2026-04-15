@@ -151,13 +151,14 @@ The checkpoint will be saved to `checkpoints/pretrained/tacotron2_statedict.pt`.
 
 **Generator weights -- manual browser download:**
 
-1. Open this Google Drive folder in your browser (official source from HiFi-GAN README):
-   https://drive.google.com/drive/folders/1-eEYTB5Av9jNql0WGBlRoi-WH2J7pb5Y
-2. Download the `generator_v1` file
-3. Move it to the correct location:
+1. Open the official Google Drive folder:
+   https://drive.google.com/drive/folders/1-eEYTB5Av9jNql0WGBlRoi-WH2J7bp5Y?usp=sharing
+2. Open the **`LJ_FT_T2_V1`** folder -- this is V1 fine-tuned with Tacotron2, which matches our generator
+3. Download the `generator` file from inside that folder
+4. Move it to the correct location:
 ```bash
 mkdir -p checkpoints/pretrained
-mv ~/Downloads/generator_v1 checkpoints/pretrained/hifigan_generator.pt
+mv ~/Downloads/generator checkpoints/pretrained/hifigan_generator.pt
 ```
 
 **Config file -- direct download (verified working):**
