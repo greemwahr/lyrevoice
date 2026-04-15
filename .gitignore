@@ -1,0 +1,79 @@
+# Keep directory structure in git even when contents are ignored
+# ─────────────────────────────────────────────
+# Datasets & preprocessed audio (large, not committed)
+# ─────────────────────────────────────────────
+data/datasets/*
+!data/datasets/.gitkeep
+
+data/preprocessed/*
+!data/preprocessed/.gitkeep
+
+# ─────────────────────────────────────────────
+# Model checkpoints & weights
+# ─────────────────────────────────────────────
+checkpoints/pretrained/*
+!checkpoints/pretrained/.gitkeep
+checkpoints/training/*
+!checkpoints/training/.gitkeep
+*.pt
+*.pth
+*.ckpt
+
+# ─────────────────────────────────────────────
+# Evaluation outputs
+# ─────────────────────────────────────────────
+eval/*
+!eval/.gitkeep
+
+# ─────────────────────────────────────────────
+# Training logs
+# ─────────────────────────────────────────────
+logs/*
+!logs/.gitkeep
+wandb/
+
+# ─────────────────────────────────────────────
+# Python
+# ─────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ─────────────────────────────────────────────
+# uv / virtual environment
+# ─────────────────────────────────────────────
+.venv/
+uv.lock
+
+# ─────────────────────────────────────────────
+# macOS
+# ─────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ─────────────────────────────────────────────
+# Editors
+# ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─────────────────────────────────────────────
+# Jupyter notebooks (checkpoints only)
+# ─────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ─────────────────────────────────────────────
+# Environment variables
+# ─────────────────────────────────────────────
+.env
+.env.local
