@@ -64,7 +64,7 @@ discriminator:
 # Training
 # ─────────────────────────────────────────────
 training:
-  batch_size: 16
+  batch_size: 8
   num_epochs: 100
   learning_rate_generator: 0.0001
   learning_rate_discriminator: 0.0004
@@ -74,7 +74,7 @@ training:
   checkpoint_interval: 10   # Save checkpoint every N epochs
   log_interval: 100         # Log to WandB every N steps
   sample_interval: 500      # Generate voice sample every N steps
-  num_workers: 4            # DataLoader workers
+  num_workers: 2            # DataLoader workers
 
   # Lambda schedule (3-phase curriculum)
   lambda_schedule:
