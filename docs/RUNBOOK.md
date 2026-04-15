@@ -149,16 +149,21 @@ The checkpoint will be saved to `checkpoints/pretrained/tacotron2_statedict.pt`.
 
 ### 5b. HiFi-GAN Vocoder (~14 MB)
 
+**Generator weights -- manual browser download:**
+
+1. Open this Google Drive folder in your browser (official source from HiFi-GAN README):
+   https://drive.google.com/drive/folders/1-eEYTB5Av9jNql0WGBlRoi-WH2J7pb5Y
+2. Download the `generator_v1` file
+3. Move it to the correct location:
 ```bash
 mkdir -p checkpoints/pretrained
+mv ~/Downloads/generator_v1 checkpoints/pretrained/hifigan_generator.pt
+```
 
-# Generator weights
-wget https://github.com/jik876/hifi-gan/releases/download/v1/generator_v1.pt \
-     -O checkpoints/pretrained/hifigan_generator.pt
-
-# Config file
-wget https://raw.githubusercontent.com/jik876/hifi-gan/master/config_v1.json \
-     -O checkpoints/pretrained/hifigan_config.json
+**Config file -- direct download (verified working):**
+```bash
+curl -L https://raw.githubusercontent.com/jik876/hifi-gan/master/config_v1.json \
+     -o checkpoints/pretrained/hifigan_config.json
 ```
 
 ---
@@ -168,11 +173,15 @@ wget https://raw.githubusercontent.com/jik876/hifi-gan/master/config_v1.json \
 WandB tracks your training losses and lets you listen to generated voice samples in real time.
 
 1. Create a free account at https://wandb.ai
-2. Log in from the terminal:
+2. Get your API key from https://wandb.ai/settings → API keys
+3. Add it to your shell profile:
+
 ```bash
-uv run wandb login
+echo 'export WANDB_API_KEY=your_api_key_here' >> ~/.zshrc
+source ~/.zshrc
 ```
-3. Enter your API key when prompted (found at https://wandb.ai/settings)
+
+> No login command needed -- wandb picks up `WANDB_API_KEY` automatically when training starts.
 
 4. Set your WandB username in `configs/config.yaml`:
 ```yaml
