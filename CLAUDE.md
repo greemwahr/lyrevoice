@@ -185,6 +185,13 @@ Lambda schedule:
 
 ---
 
+## Architectural Decision Rules
+
+- **Always ask the user before making any change that affects the planned architecture** -- this includes model choices, loss functions, datasets, evaluation metrics, training strategy, tech stack, and project structure
+- The approved architecture is documented in `docs/SPECIFICATION.md` -- treat it as the source of truth
+- Bug fixes and implementation errors can be corrected without asking
+- If a dependency or tool is broken/incompatible, propose alternatives and wait for user approval before switching
+
 ## Git Rules
 
 - **Always commit changes** after completing any task
