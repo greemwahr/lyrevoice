@@ -57,8 +57,21 @@ cd lyrevoice
 uv sync --group dev
 ```
 
-This installs all core dependencies plus dev tools (ruff, utmos).
+This installs all core dependencies plus ruff.
 uv creates a virtual environment automatically at `.venv/`.
+
+### 3b. Install UTMOS manually
+
+UTMOS22 has inconsistent package metadata and cannot be installed via uv directly.
+Install it manually into the project virtual environment:
+
+```bash
+.venv/bin/pip install git+https://github.com/sarulab-speech/UTMOS22.git
+```
+
+> UTMOS is only needed for evaluation (`scripts/evaluate.py`).
+> If you skip this step, UTMOS scoring will be skipped automatically
+> and the other two metrics (FAD, Speaker Cosine Similarity) will still run.
 
 Verify the environment is working:
 ```bash
