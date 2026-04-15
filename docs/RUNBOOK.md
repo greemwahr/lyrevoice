@@ -66,7 +66,7 @@ UTMOS22 has inconsistent package metadata and cannot be installed via uv directl
 Install it manually into the project virtual environment:
 
 ```bash
-.venv/bin/pip install git+https://github.com/sarulab-speech/UTMOS22.git
+uv pip install git+https://github.com/sarulab-speech/UTMOS22.git
 ```
 
 > UTMOS is only needed for evaluation (`scripts/evaluate.py`).
