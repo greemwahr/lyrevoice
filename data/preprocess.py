@@ -17,6 +17,7 @@ import librosa
 import soundfile as sf
 from pathlib import Path
 from tqdm import tqdm
+import torch
 
 
 def load_config(config_path: str = "configs/config.yaml") -> dict:
@@ -245,17 +246,100 @@ def preprocess_ljspeech(config: dict) -> None:
     print(f"Metadata written to {meta_path}")
 
 
+def preprocess_speaker_embeddings(config: dict) -> None:
+    """
+    Pre-compute speaker embeddings for all VCTK speakers.
+
+    For each speaker, loads all their wav files, runs Resemblyzer,
+    averages the per-utterance embeddings, and saves the result.
+    Output: {speaker_id: tensor(256,)} saved as a .pt file.
+    """
+    from models.speaker_encoder import SpeakerEncoder
+    from resemblyzer import preprocess_wav
+    import random
+
+    data_cfg = config["data"]
+    vctk_path = Path(data_cfg["vctk_path"])
+    wav_dir = vctk_path / "wav48_silence_trimmed"
+    output_path = Path(data_cfg["preprocessed_path"])
+
+    if not wav_dir.exists():
+        raise FileNotFoundError(f"VCTK wav directory not found: {wav_dir}")
+
+    encoder = SpeakerEncoder(device=torch.device("cpu"))
+    speakers = sorted([d.name for d in wav_dir.iterdir() if d.is_dir()])
+
+    # Limit speakers if configured (use same seed as dataset.py for consistency)
+    max_speakers = data_cfg.get("max_speakers")
+    if max_speakers and len(speakers) > max_speakers:
+        random.seed(42)
+        speakers = sorted(random.sample(sorted(speakers), max_speakers))
+
+    print(f"Pre-computing speaker embeddings for {len(speakers)} speakers...")
+
+    embeddings = {}
+    for speaker in tqdm(speakers, desc="Speaker embeddings"):
+        speaker_wav_dir = wav_dir / speaker
+        wav_files = sorted(speaker_wav_dir.glob("*.flac"))
+
+        if not wav_files:
+            print(f"  Skipping {speaker}: no wav files found")
+            continue
+
+        spk_embs = []
+        for wav_file in wav_files:
+            try:
+                wav = preprocess_wav(Path(wav_file))
+                emb = encoder.encoder.embed_utterance(wav)
+                spk_embs.append(emb)
+            except Exception:
+                continue
+
+        if not spk_embs:
+            print(f"  Skipping {speaker}: no valid embeddings")
+            continue
+
+        mean_emb = np.mean(spk_embs, axis=0)
+        mean_emb = mean_emb / (np.linalg.norm(mean_emb) + 1e-8)
+        embeddings[speaker] = torch.FloatTensor(mean_emb)
+
+    out_file = output_path / "speaker_embeddings.pt"
+    torch.save(embeddings, str(out_file))
+    print(f"Saved {len(embeddings)} speaker embeddings to {out_file}")
+
+
+def deep_merge(base: dict, override: dict) -> dict:
+    """Recursively merge override into base."""
+    for key, value in override.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            deep_merge(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Preprocess audio datasets for LyreVoice")
     parser.add_argument("--config", default="configs/config.yaml", help="Path to config file")
-    parser.add_argument("--dataset", choices=["vctk", "ljspeech", "all"], default="all")
+    parser.add_argument(
+        "--config-override",
+        type=str,
+        default=None,
+        help="Path to override config YAML (merged on top of base config)",
+    )
+    parser.add_argument("--dataset", choices=["vctk", "ljspeech", "speaker_embeddings", "all"], default="all")
     args = parser.parse_args()
 
     cfg = load_config(args.config)
+    if args.config_override:
+        override = load_config(args.config_override)
+        cfg = deep_merge(cfg, override)
 
     if args.dataset in ("vctk", "all"):
         preprocess_vctk(cfg)
     if args.dataset in ("ljspeech", "all"):
         preprocess_ljspeech(cfg)
+    if args.dataset in ("speaker_embeddings", "all"):
+        preprocess_speaker_embeddings(cfg)
