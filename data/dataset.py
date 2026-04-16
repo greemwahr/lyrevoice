@@ -87,6 +87,13 @@ class VCTKDataset(Dataset):
         meta_path = Path(self.data_cfg["preprocessed_path"]) / "vctk_metadata.txt"
         all_entries = load_metadata(str(meta_path))
 
+        # Rewrite wav_path to use configured vctk_path (metadata stores local paths)
+        vctk_root = Path(self.data_cfg["vctk_path"])
+        for entry in all_entries:
+            raw = entry["wav_path"]
+            relative = raw.split("VCTK-Corpus/", 1)[-1]
+            entry["wav_path"] = str(vctk_root / relative)
+
         # Group entries by speaker
         speaker_to_entries: Dict[str, List[Dict]] = {}
         for entry in all_entries:

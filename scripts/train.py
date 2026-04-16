@@ -30,6 +30,16 @@ def load_config(config_path: str) -> dict:
         return yaml.safe_load(f)
 
 
+def deep_merge(base: dict, override: dict) -> dict:
+    """Recursively merge override into base."""
+    for key, value in override.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            deep_merge(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+
 def main():
     parser = argparse.ArgumentParser(description="Train LyreVoice GAN")
     parser.add_argument(
@@ -37,6 +47,12 @@ def main():
         type=str,
         default="configs/config.yaml",
         help="Path to config YAML file",
+    )
+    parser.add_argument(
+        "--config-override",
+        type=str,
+        default=None,
+        help="Path to override config YAML (merged on top of base config)",
     )
     parser.add_argument(
         "--resume",
@@ -47,6 +63,9 @@ def main():
     args = parser.parse_args()
 
     config = load_config(args.config)
+    if args.config_override:
+        override = load_config(args.config_override)
+        config = deep_merge(config, override)
 
     print("=" * 60)
     print("LyreVoice GAN Training")

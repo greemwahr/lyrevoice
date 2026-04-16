@@ -1,0 +1,18 @@
+# Colab path overrides — merged on top of configs/config.yaml
+# All other settings (model, training, wandb) inherited from base config.
+
+data:
+  vctk_path: /content/drive/MyDrive/lyrevoice/datasets/VCTK-Corpus
+  ljspeech_path: /content/drive/MyDrive/lyrevoice/datasets/LJSpeech-1.1
+  preprocessed_path: /content/drive/MyDrive/lyrevoice/preprocessed
+
+generator:
+  tacotron2_checkpoint: /content/drive/MyDrive/lyrevoice/pretrained/tacotron2_statedict.pt
+
+vocoder:
+  checkpoint: /content/drive/MyDrive/lyrevoice/pretrained/hifigan_generator.pt
+  config: /content/drive/MyDrive/lyrevoice/pretrained/hifigan_config.json
+
+paths:
+  checkpoints: /content/drive/MyDrive/lyrevoice/checkpoints
+  logs: /content/lyrevoice/logs
