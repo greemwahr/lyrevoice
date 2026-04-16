@@ -91,6 +91,15 @@ class Trainer:
         # WandB
         self._init_wandb()
 
+    @staticmethod
+    def _strip_none(obj):
+        """Recursively remove None values from nested dicts/lists for JSON serialization."""
+        if isinstance(obj, dict):
+            return {k: Trainer._strip_none(v) for k, v in obj.items() if v is not None}
+        if isinstance(obj, list):
+            return [Trainer._strip_none(i) for i in obj]
+        return obj
+
     def _init_wandb(self) -> None:
         wb_cfg = self.config["wandb"]
         try:
@@ -98,7 +107,7 @@ class Trainer:
                 project=wb_cfg["project"],
                 entity=wb_cfg.get("entity"),
                 name=wb_cfg.get("run_name"),
-                config=self.config,
+                config=self._strip_none(self.config),
             )
             wandb.watch(self.generator, log="gradients", log_freq=200)
             wandb.watch(self.discriminator, log="gradients", log_freq=200)

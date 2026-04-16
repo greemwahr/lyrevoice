@@ -185,49 +185,51 @@ class LyreVoiceGenerator(nn.Module):
         text_sequences: torch.Tensor,
         text_lengths: torch.Tensor,
         speaker_embeddings: torch.Tensor,
-        mel_targets: Optional[torch.Tensor] = None,
-        output_lengths: Optional[torch.Tensor] = None,
+        mel_targets: torch.Tensor,
+        output_lengths: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
-        Forward pass through the speaker-conditioned generator.
+        Training forward pass -- mirrors Tacotron2.forward() with speaker
+        conditioning injected between encoder and decoder.
 
         Args:
-            text_sequences:    (batch, max_text_len) -- tokenized text
-            text_lengths:      (batch,) -- actual text lengths
+            text_sequences:    (batch, max_text_len) -- tokenized text (sorted by descending length)
+            text_lengths:      (batch,) -- actual text lengths (descending, for pack_padded_sequence)
             speaker_embeddings:(batch, 256) -- from Resemblyzer
             mel_targets:       (batch, n_mels, max_frames) -- for teacher forcing
             output_lengths:    (batch,) -- actual mel lengths
 
         Returns:
-            mel_outputs:       (batch, n_mels, frames) -- post-net mel
-            mel_outputs_pre:   (batch, n_mels, frames) -- pre post-net mel
-            gate_outputs:      (batch, frames) -- stop token predictions
+            mel_outputs_postnet: (batch, n_mels, frames) -- post-net mel
+            mel_outputs:         (batch, n_mels, frames) -- raw decoder mel
+            gate_outputs:        (batch, frames) -- stop token predictions
         """
-        # Embed text (int token IDs → float embeddings) then encode
+        # ── Encode (same as Tacotron2.forward lines 663-665) ──────────────
         embedded_inputs = self.tacotron2.embedding(text_sequences).transpose(1, 2)
         encoder_outputs = self.tacotron2.encoder(embedded_inputs, text_lengths)
 
-        # Inject speaker identity into encoder outputs
+        # ── Inject speaker identity ───────────────────────────────────────
         conditioned_outputs = self.speaker_conditioning(
             encoder_outputs, speaker_embeddings
         )
 
-        # Decode conditioned outputs to mel-spectrogram
-        if mel_targets is not None:
-            # Teacher forcing during training
-            mel_outputs_pre, gate_outputs, _ = self.tacotron2.decoder(
-                conditioned_outputs, mel_targets, memory_lengths=text_lengths
-            )
-        else:
-            # Autoregressive inference
-            mel_outputs_pre, gate_outputs, _ = self.tacotron2.decoder.infer(
-                conditioned_outputs, memory_lengths=text_lengths
-            )
+        # ── Decode with teacher forcing (Decoder.forward returns 3 values) ─
+        # .contiguous() required: batch sorting in trainer makes mel_targets
+        # non-contiguous, but Decoder.parse_decoder_inputs does .transpose().view()
+        mel_outputs, gate_outputs, _ = self.tacotron2.decoder(
+            conditioned_outputs, mel_targets.contiguous(), memory_lengths=text_lengths
+        )
 
-        # Post-net refinement
-        mel_outputs = self.tacotron2.postnet(mel_outputs_pre) + mel_outputs_pre
+        # ── Post-net refinement (residual, same as Tacotron2.forward l670-671)
+        mel_outputs_postnet = self.tacotron2.postnet(mel_outputs) + mel_outputs
 
-        return mel_outputs, mel_outputs_pre, gate_outputs
+        # ── Mask padded frames (same as Tacotron2.parse_output) ───────────
+        outputs = self.tacotron2.parse_output(
+            [mel_outputs, mel_outputs_postnet, gate_outputs],
+            output_lengths,
+        )
+
+        return outputs[1], outputs[0], outputs[2]
 
     @torch.no_grad()
     def infer(
@@ -239,6 +241,7 @@ class LyreVoiceGenerator(nn.Module):
         Generate a mel-spectrogram from text and a speaker embedding.
 
         Used during app inference -- no teacher forcing, pure autoregressive.
+        Mirrors Tacotron2.infer() with speaker conditioning injected.
 
         Args:
             text:              Input text string
@@ -254,13 +257,15 @@ class LyreVoiceGenerator(nn.Module):
         lengths = torch.LongTensor([len(sequence)]).to(self.device)
         spk_emb = speaker_embedding.unsqueeze(0).to(self.device)
 
+        # encoder.infer() — no pack_padded_sequence, no sort requirement
         embedded_inputs = self.tacotron2.embedding(sequence_tensor).transpose(1, 2)
-        encoder_outputs = self.tacotron2.encoder(embedded_inputs, lengths)
+        encoder_outputs = self.tacotron2.encoder.infer(embedded_inputs, lengths)
         conditioned_outputs = self.speaker_conditioning(encoder_outputs, spk_emb)
 
-        mel_outputs_pre, _, _ = self.tacotron2.decoder.infer(
+        # decoder.infer() returns 4 values: mel_outputs, gate_outputs, alignments, mel_lengths
+        mel_outputs, _, _, _ = self.tacotron2.decoder.infer(
             conditioned_outputs, memory_lengths=lengths
         )
-        mel_outputs = self.tacotron2.postnet(mel_outputs_pre) + mel_outputs_pre
+        mel_outputs_postnet = self.tacotron2.postnet(mel_outputs) + mel_outputs
 
-        return mel_outputs.squeeze(0)
+        return mel_outputs_postnet.squeeze(0)
