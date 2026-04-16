@@ -31,6 +31,7 @@ eval/*
 logs/*
 !logs/.gitkeep
 wandb/
+tea_debug.log
 
 # ─────────────────────────────────────────────
 # Python
