@@ -26,6 +26,7 @@ dependencies = [
     "scipy>=1.11.0",
     "tqdm>=4.65.0",
     "matplotlib>=3.7.0",
+    "setuptools>=70.0",
 ]
 
 [dependency-groups]
