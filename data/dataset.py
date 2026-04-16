@@ -124,7 +124,8 @@ class VCTKDataset(Dataset):
         entry = self.entries[idx]
 
         # Load preprocessed mel-spectrogram
-        mel = np.load(entry["mel_path"])
+        mel_path = Path(self.data_cfg["preprocessed_path"]) / entry["mel_path"]
+        mel = np.load(mel_path)
         mel, mel_len = pad_or_trim_mel(mel, self.max_frames)
 
         # Sample 3 reference wav paths for speaker encoder
@@ -182,7 +183,8 @@ class LJSpeechDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Dict:
         entry = self.entries[idx]
-        mel = np.load(entry["mel_path"])
+        mel_path = Path(self.data_cfg["preprocessed_path"]) / entry["mel_path"]
+        mel = np.load(mel_path)
         mel, mel_len = pad_or_trim_mel(mel, self.max_frames)
 
         return {

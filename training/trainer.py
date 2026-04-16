@@ -93,14 +93,19 @@ class Trainer:
 
     def _init_wandb(self) -> None:
         wb_cfg = self.config["wandb"]
-        wandb.init(
-            project=wb_cfg["project"],
-            entity=wb_cfg.get("entity"),
-            name=wb_cfg.get("run_name"),
-            config=self.config,
-        )
-        wandb.watch(self.generator, log="gradients", log_freq=200)
-        wandb.watch(self.discriminator, log="gradients", log_freq=200)
+        try:
+            wandb.init(
+                project=wb_cfg["project"],
+                entity=wb_cfg.get("entity"),
+                name=wb_cfg.get("run_name"),
+                config=self.config,
+            )
+            wandb.watch(self.generator, log="gradients", log_freq=200)
+            wandb.watch(self.discriminator, log="gradients", log_freq=200)
+            self.use_wandb = True
+        except Exception as e:
+            print(f"WARNING: WandB init failed ({e}). Training will continue without WandB.")
+            self.use_wandb = False
 
     def _save_checkpoint(self, epoch: int) -> None:
         ckpt_dir = Path(self.config["paths"]["checkpoints"])
@@ -149,6 +154,15 @@ class Trainer:
 
         # ── Text to tensor ────────────────────────────────────────────────
         text_seqs, text_lengths = self._text_batch_to_tensors(texts, self.device)
+
+        # Sort batch by text length (descending) -- required by Tacotron2's
+        # pack_padded_sequence in the encoder
+        sorted_idx = torch.argsort(text_lengths, descending=True)
+        text_seqs = text_seqs[sorted_idx]
+        text_lengths = text_lengths[sorted_idx]
+        speaker_embeddings = speaker_embeddings[sorted_idx]
+        mel_real = mel_real[sorted_idx]
+        mel_lengths = mel_lengths[sorted_idx]
 
         # ── Generator forward pass ────────────────────────────────────────
         mel_generated, mel_pre, gate_outputs = self.generator(
@@ -217,14 +231,15 @@ class Trainer:
         mel = self.generator.infer(sample_text, spk_emb)
         audio = self.vocoder.mel_to_audio(mel)
 
-        wandb.log({
-            "generated_audio": wandb.Audio(
-                audio,
-                sample_rate=self.config["audio"]["sample_rate"],
-                caption=f"[{speaker_id}] {sample_text[:60]}",
-            ),
-            "epoch": epoch,
-        })
+        if self.use_wandb:
+            wandb.log({
+                "generated_audio": wandb.Audio(
+                    audio,
+                    sample_rate=self.config["audio"]["sample_rate"],
+                    caption=f"[{speaker_id}] {sample_text[:60]}",
+                ),
+                "epoch": epoch,
+            })
 
         self.generator.train()
 
@@ -259,7 +274,7 @@ class Trainer:
                     "λ2": f"{step_stats.get('lambda_speaker', 0):.2f}",
                 })
 
-                if self.global_step % log_interval == 0:
+                if self.global_step % log_interval == 0 and self.use_wandb:
                     wandb.log({**step_stats, "step": self.global_step, "epoch": epoch})
 
                 if self.global_step % sample_interval == 0:
@@ -267,13 +282,15 @@ class Trainer:
 
             # Epoch-level logging
             n_steps = len(self.train_loader)
-            wandb.log({
-                f"epoch/{k}": v / n_steps
-                for k, v in epoch_stats.items()
-            } | {"epoch": epoch})
+            if self.use_wandb:
+                wandb.log({
+                    f"epoch/{k}": v / n_steps
+                    for k, v in epoch_stats.items()
+                } | {"epoch": epoch})
 
             if epoch % checkpoint_interval == 0:
                 self._save_checkpoint(epoch)
 
         print("Training complete.")
-        wandb.finish()
+        if self.use_wandb:
+            wandb.finish()

@@ -147,14 +147,32 @@ class LyreVoiceGenerator(nn.Module):
             tacotron2.load_state_dict(state_dict)
             print(f"Tacotron2 loaded from local checkpoint: {ckpt}")
         else:
-            # Download pretrained weights from NVIDIA hub
+            # Download pretrained weights manually to avoid NVIDIA's
+            # torch.load() call which lacks map_location and fails on non-CUDA
             print("Downloading pretrained Tacotron2 from NVIDIA Torch Hub...")
+            CKPT_URL = (
+                "https://api.ngc.nvidia.com/v2/models/nvidia/"
+                "tacotron2_pyt_ckpt_fp32/versions/19.09.0/files/"
+                "nvidia_tacotron2pyt_fp32_20190427"
+            )
+            # Load architecture only (no weights)
             tacotron2 = torch.hub.load(
                 "NVIDIA/DeepLearningExamples:torchhub",
                 "nvidia_tacotron2",
                 model_math="fp32",
-                pretrained=True,
+                pretrained=False,
             )
+            # Download and load weights with map_location=cpu
+            checkpoint = torch.hub.load_state_dict_from_url(
+                CKPT_URL, map_location="cpu"
+            )
+            if "state_dict" in checkpoint:
+                checkpoint = checkpoint["state_dict"]
+            # Strip "module." prefix from DataParallel-saved checkpoint
+            checkpoint = {
+                k.replace("module.", "", 1): v for k, v in checkpoint.items()
+            }
+            tacotron2.load_state_dict(checkpoint)
             # Save for future use
             ckpt.parent.mkdir(parents=True, exist_ok=True)
             torch.save(tacotron2.state_dict(), str(ckpt))
@@ -185,8 +203,9 @@ class LyreVoiceGenerator(nn.Module):
             mel_outputs_pre:   (batch, n_mels, frames) -- pre post-net mel
             gate_outputs:      (batch, frames) -- stop token predictions
         """
-        # Encode text
-        encoder_outputs = self.tacotron2.encoder(text_sequences, text_lengths)
+        # Embed text (int token IDs → float embeddings) then encode
+        embedded_inputs = self.tacotron2.embedding(text_sequences).transpose(1, 2)
+        encoder_outputs = self.tacotron2.encoder(embedded_inputs, text_lengths)
 
         # Inject speaker identity into encoder outputs
         conditioned_outputs = self.speaker_conditioning(
@@ -196,17 +215,17 @@ class LyreVoiceGenerator(nn.Module):
         # Decode conditioned outputs to mel-spectrogram
         if mel_targets is not None:
             # Teacher forcing during training
-            mel_outputs, mel_outputs_pre, gate_outputs, _ = self.tacotron2.decoder(
+            mel_outputs_pre, gate_outputs, _ = self.tacotron2.decoder(
                 conditioned_outputs, mel_targets, memory_lengths=text_lengths
             )
         else:
             # Autoregressive inference
-            mel_outputs, mel_outputs_pre, gate_outputs, _ = self.tacotron2.decoder.infer(
+            mel_outputs_pre, gate_outputs, _ = self.tacotron2.decoder.infer(
                 conditioned_outputs, memory_lengths=text_lengths
             )
 
         # Post-net refinement
-        mel_outputs = self.tacotron2.postnet(mel_outputs) + mel_outputs
+        mel_outputs = self.tacotron2.postnet(mel_outputs_pre) + mel_outputs_pre
 
         return mel_outputs, mel_outputs_pre, gate_outputs
 
@@ -235,12 +254,13 @@ class LyreVoiceGenerator(nn.Module):
         lengths = torch.LongTensor([len(sequence)]).to(self.device)
         spk_emb = speaker_embedding.unsqueeze(0).to(self.device)
 
-        encoder_outputs = self.tacotron2.encoder(sequence_tensor, lengths)
+        embedded_inputs = self.tacotron2.embedding(sequence_tensor).transpose(1, 2)
+        encoder_outputs = self.tacotron2.encoder(embedded_inputs, lengths)
         conditioned_outputs = self.speaker_conditioning(encoder_outputs, spk_emb)
 
-        mel_outputs, mel_outputs_pre, _, _ = self.tacotron2.decoder.infer(
+        mel_outputs_pre, _, _ = self.tacotron2.decoder.infer(
             conditioned_outputs, memory_lengths=lengths
         )
-        mel_outputs = self.tacotron2.postnet(mel_outputs) + mel_outputs
+        mel_outputs = self.tacotron2.postnet(mel_outputs_pre) + mel_outputs_pre
 
         return mel_outputs.squeeze(0)

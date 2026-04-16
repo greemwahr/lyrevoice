@@ -6,28 +6,21 @@ requires-python = ">=3.10"
 
 dependencies = [
     # Core framework
-    "torch>=2.1.0",
-    "torchaudio>=2.1.0",
-
+    "torch>=2.1.0,<2.6.0",
+    "torchaudio>=2.1.0,<2.6.0",
     # Audio processing
     "librosa>=0.10.0",
     "soundfile>=0.12.1",
-
     # Speaker encoder
     "resemblyzer>=0.1.1.dev0",
-
     # Config management
     "pyyaml>=6.0",
-
     # Training monitoring
-    "wandb>=0.16.0",
-
+    "wandb>=0.19.0",
     # App UI
     "gradio>=4.0.0",
-
     # Evaluation
     "frechet-audio-distance>=0.0.4",
-
     # Utilities
     "numpy>=1.24.0",
     "scipy>=1.11.0",
