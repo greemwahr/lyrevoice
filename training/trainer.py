@@ -257,13 +257,21 @@ class Trainer:
         self.generator.train()
 
     def train(self) -> None:
-        """Full training loop."""
+        """Full training loop with early stopping."""
         num_epochs = self.train_cfg["num_epochs"]
         log_interval = self.train_cfg["log_interval"]
         sample_interval = self.train_cfg["sample_interval"]
         checkpoint_interval = self.train_cfg["checkpoint_interval"]
 
-        print(f"Starting training for {num_epochs} epochs...")
+        # Early stopping config
+        es_cfg = self.train_cfg.get("early_stopping", {})
+        patience = es_cfg.get("patience", 10)
+        min_delta = es_cfg.get("min_delta", 0.001)
+        best_g_loss = float("inf")
+        epochs_without_improvement = 0
+
+        print(f"Starting training for {num_epochs} epochs "
+              f"(early stopping: patience={patience}, min_delta={min_delta})...")
 
         for epoch in range(self.start_epoch, num_epochs + 1):
             self.generator.train()
@@ -295,6 +303,7 @@ class Trainer:
 
             # Epoch-level logging
             n_steps = len(self.train_loader)
+            avg_g_loss = epoch_stats.get("g_loss_total", 0) / n_steps
             if self.use_wandb:
                 wandb.log({
                     f"epoch/{k}": v / n_steps
@@ -303,6 +312,20 @@ class Trainer:
 
             if epoch % checkpoint_interval == 0:
                 self._save_checkpoint(epoch)
+
+            # Early stopping check
+            if avg_g_loss < best_g_loss - min_delta:
+                best_g_loss = avg_g_loss
+                epochs_without_improvement = 0
+            else:
+                epochs_without_improvement += 1
+                print(f"No improvement for {epochs_without_improvement}/{patience} epochs "
+                      f"(best G loss: {best_g_loss:.4f}, current: {avg_g_loss:.4f})")
+
+            if epochs_without_improvement >= patience:
+                print(f"Early stopping triggered at epoch {epoch}.")
+                self._save_checkpoint(epoch)
+                break
 
         print("Training complete.")
         if self.use_wandb:

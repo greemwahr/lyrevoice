@@ -93,6 +93,14 @@ class VCTKDataset(Dataset):
             spk = entry["speaker"]
             speaker_to_entries.setdefault(spk, []).append(entry)
 
+        # Limit number of speakers if configured
+        max_speakers = self.data_cfg.get("max_speakers")
+        if max_speakers and len(speaker_to_entries) > max_speakers:
+            all_spks = sorted(speaker_to_entries.keys())
+            random.seed(42)
+            selected = random.sample(all_spks, max_speakers)
+            speaker_to_entries = {s: speaker_to_entries[s] for s in selected}
+
         # Build speaker wav lookup for speaker encoder enrollment
         self.speaker_wavs: Dict[str, List[str]] = {
             spk: [e["wav_path"] for e in entries]
@@ -235,6 +243,6 @@ def get_dataloader(
         shuffle=(split == "train"),
         num_workers=train_cfg["num_workers"],
         collate_fn=collate_fn,
-        pin_memory=True,
+        pin_memory=torch.cuda.is_available(),
         drop_last=(split == "train"),
     )

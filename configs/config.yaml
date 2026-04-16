@@ -25,6 +25,7 @@ data:
   train_split: 0.95
   val_split: 0.05
   max_wav_length: 10      # Max audio clip length in seconds
+  max_speakers: 30        # Limit speakers for faster training (null = use all)
 
 # ─────────────────────────────────────────────
 # Speaker Encoder (Resemblyzer - frozen)
@@ -64,7 +65,7 @@ discriminator:
 # Training
 # ─────────────────────────────────────────────
 training:
-  batch_size: 8
+  batch_size: 16
   num_epochs: 100
   learning_rate_generator: 0.0001
   learning_rate_discriminator: 0.0004
@@ -75,6 +76,11 @@ training:
   log_interval: 100         # Log to WandB every N steps
   sample_interval: 500      # Generate voice sample every N steps
   num_workers: 2            # DataLoader workers
+
+  # Early stopping -- stop if generator loss doesn't improve
+  early_stopping:
+    patience: 10            # Stop after N epochs without improvement
+    min_delta: 0.001        # Minimum loss decrease to count as improvement
 
   # Lambda schedule (3-phase curriculum)
   lambda_schedule:
