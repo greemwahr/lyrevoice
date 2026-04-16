@@ -16,6 +16,7 @@ vocoder:
 
 training:
   batch_size: 128
+  num_workers: 4            # A100/H100 host CPUs can handle more workers
 
 paths:
   checkpoints: /content/drive/MyDrive/lyrevoice/checkpoints
