@@ -166,13 +166,16 @@ class Trainer:
         text_seqs, text_lengths = self._text_batch_to_tensors(texts, self.device)
 
         # Sort batch by text length (descending) -- required by Tacotron2's
-        # pack_padded_sequence in the encoder
+        # pack_padded_sequence in the encoder.
+        # .contiguous() after indexing -- fancy indexing can produce
+        # non-contiguous tensors that cause .view() failures in PyTorch's
+        # C++ autograd backward kernels on MPS.
         sorted_idx = torch.argsort(text_lengths, descending=True)
-        text_seqs = text_seqs[sorted_idx]
-        text_lengths = text_lengths[sorted_idx]
-        speaker_embeddings = speaker_embeddings[sorted_idx]
-        mel_real = mel_real[sorted_idx]
-        mel_lengths = mel_lengths[sorted_idx]
+        text_seqs = text_seqs[sorted_idx].contiguous()
+        text_lengths = text_lengths[sorted_idx].contiguous()
+        speaker_embeddings = speaker_embeddings[sorted_idx].contiguous()
+        mel_real = mel_real[sorted_idx].contiguous()
+        mel_lengths = mel_lengths[sorted_idx].contiguous()
 
         # ── Generator forward pass ────────────────────────────────────────
         mel_generated, mel_pre, gate_outputs = self.generator(
