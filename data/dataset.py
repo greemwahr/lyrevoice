@@ -129,6 +129,15 @@ class VCTKDataset(Dataset):
         self.speakers = sorted(speaker_to_entries.keys())
         self.speaker_to_idx = {spk: i for i, spk in enumerate(self.speakers)}
 
+        # Load pre-computed speaker embeddings if available
+        emb_path = Path(self.data_cfg["preprocessed_path"]) / "speaker_embeddings.pt"
+        if emb_path.exists():
+            self.speaker_embeddings = torch.load(str(emb_path), weights_only=True)
+            print(f"  Loaded pre-computed speaker embeddings from {emb_path}")
+        else:
+            self.speaker_embeddings = None
+            print(f"  WARNING: No pre-computed embeddings at {emb_path}, using live encoder")
+
         print(f"VCTKDataset [{split}]: {len(self.entries)} utterances, "
               f"{len(self.speakers)} speakers")
 
@@ -148,7 +157,7 @@ class VCTKDataset(Dataset):
         all_wavs = self.speaker_wavs[spk]
         ref_wavs = random.sample(all_wavs, min(3, len(all_wavs)))
 
-        return {
+        result = {
             "mel": torch.FloatTensor(mel),
             "mel_len": torch.LongTensor([mel_len]),
             "text": entry["text"],
@@ -156,6 +165,9 @@ class VCTKDataset(Dataset):
             "speaker_idx": torch.LongTensor([self.speaker_to_idx[spk]]),
             "ref_wav_paths": ref_wavs,
         }
+        if self.speaker_embeddings and spk in self.speaker_embeddings:
+            result["speaker_embedding"] = self.speaker_embeddings[spk]
+        return result
 
 
 class LJSpeechDataset(Dataset):
@@ -224,6 +236,9 @@ def collate_fn(batch: List[Dict]) -> Dict:
         result["speaker_id"] = [item["speaker_id"] for item in batch]
         result["speaker_idx"] = torch.cat([item["speaker_idx"] for item in batch])
         result["ref_wav_paths"] = [item["ref_wav_paths"] for item in batch]
+
+    if "speaker_embedding" in batch[0]:
+        result["speaker_embedding"] = torch.stack([item["speaker_embedding"] for item in batch])
 
     return result
 
