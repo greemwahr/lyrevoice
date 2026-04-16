@@ -6,8 +6,8 @@ requires-python = ">=3.10"
 
 dependencies = [
     # Core framework
-    "torch>=2.6.0",
-    "torchaudio>=2.6.0",
+    "torch>=2.6.0,<2.9.0",
+    "torchaudio>=2.6.0,<2.9.0",
     # Audio processing
     "librosa>=0.10.0",
     "soundfile>=0.12.1",
