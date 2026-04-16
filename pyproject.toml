@@ -16,7 +16,7 @@ dependencies = [
     # Config management
     "pyyaml>=6.0",
     # Training monitoring
-    "wandb>=0.19.0",
+    "wandb>=0.19.0,<0.24.0",
     # App UI
     "gradio>=4.0.0",
     # Evaluation

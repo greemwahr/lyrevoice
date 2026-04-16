@@ -14,10 +14,21 @@ The lambda schedule is applied automatically based on current epoch.
 All metrics are logged to WandB.
 """
 
+import json
 import os
 import yaml
 import torch
 import torch.nn as nn
+
+# Workaround: wandb server returns flags=None in the viewer query,
+# causing json.loads(None) to crash. Patch before importing wandb.
+_orig_json_loads = json.loads
+def _safe_json_loads(s, *args, **kwargs):
+    if s is None:
+        return {}
+    return _orig_json_loads(s, *args, **kwargs)
+json.loads = _safe_json_loads
+
 import wandb
 from pathlib import Path
 from typing import Optional
@@ -91,23 +102,13 @@ class Trainer:
         # WandB
         self._init_wandb()
 
-    @staticmethod
-    def _strip_none(obj):
-        """Recursively remove None values from nested dicts/lists for JSON serialization."""
-        if isinstance(obj, dict):
-            return {k: Trainer._strip_none(v) for k, v in obj.items() if v is not None}
-        if isinstance(obj, list):
-            return [Trainer._strip_none(i) for i in obj]
-        return obj
-
     def _init_wandb(self) -> None:
         wb_cfg = self.config["wandb"]
         try:
             wandb.init(
                 project=wb_cfg["project"],
                 entity=wb_cfg.get("entity"),
-                name=wb_cfg.get("run_name"),
-                config=self._strip_none(self.config),
+                config=self.config,
             )
             wandb.watch(self.generator, log="gradients", log_freq=200)
             wandb.watch(self.discriminator, log="gradients", log_freq=200)

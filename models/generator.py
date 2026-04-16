@@ -126,7 +126,49 @@ class LyreVoiceGenerator(nn.Module):
         for param in self.tacotron2.decoder.parameters():
             param.requires_grad = True
 
+        # Monkey-patch decoder to replace .view() with .reshape() --
+        # NVIDIA's decoder uses .transpose().view() which fails on MPS
+        # during backward because gradient tensors are non-contiguous.
+        self._patch_decoder_view(self.tacotron2.decoder)
+
         self.to(device)
+
+    @staticmethod
+    def _patch_decoder_view(decoder):
+        """Replace .view() with .reshape() in Tacotron2 decoder methods.
+
+        NVIDIA's parse_decoder_inputs and parse_decoder_outputs use
+        .transpose().view() which requires contiguous memory. On MPS,
+        gradient tensors in the backward pass can be non-contiguous,
+        causing RuntimeError. .reshape() handles both cases.
+        """
+        def patched_parse_decoder_inputs(self, decoder_inputs):
+            # (B, n_mel_channels, T_out) -> (B, T_out, n_mel_channels)
+            decoder_inputs = decoder_inputs.transpose(1, 2)
+            decoder_inputs = decoder_inputs.reshape(
+                decoder_inputs.size(0),
+                int(decoder_inputs.size(1) / self.n_frames_per_step), -1)
+            # (B, T_out, n_mel_channels) -> (T_out, B, n_mel_channels)
+            decoder_inputs = decoder_inputs.transpose(0, 1)
+            return decoder_inputs
+
+        def patched_parse_decoder_outputs(self, mel_outputs, gate_outputs, alignments):
+            # (T_out, B) -> (B, T_out)
+            alignments = alignments.transpose(0, 1).contiguous()
+            # (T_out, B) -> (B, T_out)
+            gate_outputs = gate_outputs.transpose(0, 1).contiguous()
+            # (T_out, B, n_mel_channels) -> (B, T_out, n_mel_channels)
+            mel_outputs = mel_outputs.transpose(0, 1).contiguous()
+            # decouple frames per step
+            shape = (mel_outputs.shape[0], -1, self.n_mel_channels)
+            mel_outputs = mel_outputs.reshape(*shape)
+            # (B, T_out, n_mel_channels) -> (B, n_mel_channels, T_out)
+            mel_outputs = mel_outputs.transpose(1, 2)
+            return mel_outputs, gate_outputs, alignments
+
+        import types
+        decoder.parse_decoder_inputs = types.MethodType(patched_parse_decoder_inputs, decoder)
+        decoder.parse_decoder_outputs = types.MethodType(patched_parse_decoder_outputs, decoder)
 
     def _load_tacotron2(self, checkpoint_path: str):
         """
