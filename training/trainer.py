@@ -72,6 +72,15 @@ class Trainer:
         self.discriminator = MultiScaleDiscriminator(config).to(self.device)
         self.vocoder = Vocoder(config, device=self.device)
 
+        # torch.compile -- fuses CUDA kernels for ~10-30% speedup on A100/H100
+        if self.device.type == "cuda":
+            try:
+                self.generator = torch.compile(self.generator)
+                self.discriminator = torch.compile(self.discriminator)
+                print("Models compiled with torch.compile()")
+            except Exception as e:
+                print(f"torch.compile() not available: {e}")
+
         # Losses
         self.d_loss_fn = LSGANDiscriminatorLoss()
         self.g_loss_fn = GeneratorTotalLoss(config)
@@ -87,6 +96,11 @@ class Trainer:
             lr=self.train_cfg["learning_rate_discriminator"],
             betas=(self.train_cfg["adam_beta1"], self.train_cfg["adam_beta2"]),
         )
+
+        # AMP -- automatic mixed precision for CUDA Tensor Cores
+        self.use_amp = (self.device.type == "cuda")
+        self.scaler_g = torch.amp.GradScaler(enabled=self.use_amp)
+        self.scaler_d = torch.amp.GradScaler(enabled=self.use_amp)
 
         # Data
         self.train_loader = get_dataloader(config, dataset_name="vctk", split="train")
@@ -129,6 +143,8 @@ class Trainer:
             "discriminator_state_dict": self.discriminator.state_dict(),
             "optimizer_g_state_dict": self.optimizer_g.state_dict(),
             "optimizer_d_state_dict": self.optimizer_d.state_dict(),
+            "scaler_g_state_dict": self.scaler_g.state_dict() if self.use_amp else None,
+            "scaler_d_state_dict": self.scaler_d.state_dict() if self.use_amp else None,
         }, str(ckpt_path))
         print(f"Checkpoint saved: {ckpt_path}")
 
@@ -138,6 +154,9 @@ class Trainer:
         self.discriminator.load_state_dict(ckpt["discriminator_state_dict"])
         self.optimizer_g.load_state_dict(ckpt["optimizer_g_state_dict"])
         self.optimizer_d.load_state_dict(ckpt["optimizer_d_state_dict"])
+        if self.use_amp and ckpt.get("scaler_g_state_dict"):
+            self.scaler_g.load_state_dict(ckpt["scaler_g_state_dict"])
+            self.scaler_d.load_state_dict(ckpt["scaler_d_state_dict"])
         self.start_epoch = ckpt["epoch"] + 1
         self.global_step = ckpt["global_step"]
         print(f"Resumed from checkpoint: {checkpoint_path} (epoch {ckpt['epoch']})")
@@ -160,7 +179,11 @@ class Trainer:
         ref_wav_paths = batch["ref_wav_paths"]
 
         # ── Speaker embeddings (frozen Resemblyzer) ──────────────────────
-        speaker_embeddings = self.speaker_encoder(ref_wav_paths)  # (B, 256)
+        # Use pre-computed embeddings if available, otherwise fall back to live encoder
+        if "speaker_embedding" in batch:
+            speaker_embeddings = batch["speaker_embedding"].to(self.device)
+        else:
+            speaker_embeddings = self.speaker_encoder(ref_wav_paths)  # (B, 256)
 
         # ── Text to tensor ────────────────────────────────────────────────
         text_seqs, text_lengths = self._text_batch_to_tensors(texts, self.device)
@@ -178,56 +201,58 @@ class Trainer:
         mel_lengths = mel_lengths[sorted_idx].contiguous()
 
         # ── Generator forward pass ────────────────────────────────────────
-        mel_generated, mel_pre, gate_outputs = self.generator(
-            text_sequences=text_seqs,
-            text_lengths=text_lengths,
-            speaker_embeddings=speaker_embeddings,
-            mel_targets=mel_real,
-            output_lengths=mel_lengths,
-        )
+        with torch.amp.autocast("cuda", enabled=self.use_amp):
+            mel_generated, mel_pre, gate_outputs = self.generator(
+                text_sequences=text_seqs,
+                text_lengths=text_lengths,
+                speaker_embeddings=speaker_embeddings,
+                mel_targets=mel_real,
+                output_lengths=mel_lengths,
+            )
 
         # ── Discriminator step ────────────────────────────────────────────
         self.optimizer_d.zero_grad()
 
-        real_scores, _ = self.discriminator(mel_real.detach())
-        fake_scores, _ = self.discriminator(mel_generated.detach())
+        with torch.amp.autocast("cuda", enabled=self.use_amp):
+            real_scores, _ = self.discriminator(mel_real.detach())
+            fake_scores, _ = self.discriminator(mel_generated.detach())
+            d_loss, d_stats = self.d_loss_fn(real_scores, fake_scores)
 
-        d_loss, d_stats = self.d_loss_fn(real_scores, fake_scores)
-        d_loss.backward()
+        self.scaler_d.scale(d_loss).backward()
 
         nn.utils.clip_grad_norm_(
             self.discriminator.parameters(),
             self.train_cfg["grad_clip_threshold"],
         )
-        self.optimizer_d.step()
+        self.scaler_d.step(self.optimizer_d)
+        self.scaler_d.update()
 
         # ── Generator step ────────────────────────────────────────────────
         self.optimizer_g.zero_grad()
 
-        fake_scores_for_g, _ = self.discriminator(mel_generated)
+        with torch.amp.autocast("cuda", enabled=self.use_amp):
+            fake_scores_for_g, _ = self.discriminator(mel_generated)
 
-        # Speaker embeddings for generated speech (mel-proxy)
-        # Full Resemblyzer comparison happens during evaluation
-        spk_emb_generated = speaker_embeddings  # proxy: use same target embedding
-        # During training we use the target embedding as proxy to avoid vocoder overhead.
-        # True speaker cosine similarity is measured during evaluation with Resemblyzer.
+            spk_emb_generated = speaker_embeddings
 
-        g_loss, g_stats = self.g_loss_fn(
-            fake_scores=fake_scores_for_g,
-            mel_generated=mel_generated,
-            mel_real=mel_real,
-            mel_lengths=mel_lengths,
-            speaker_embedding_target=speaker_embeddings,
-            speaker_embedding_generated=spk_emb_generated,
-            epoch=epoch,
-        )
-        g_loss.backward()
+            g_loss, g_stats = self.g_loss_fn(
+                fake_scores=fake_scores_for_g,
+                mel_generated=mel_generated,
+                mel_real=mel_real,
+                mel_lengths=mel_lengths,
+                speaker_embedding_target=speaker_embeddings,
+                speaker_embedding_generated=spk_emb_generated,
+                epoch=epoch,
+            )
+
+        self.scaler_g.scale(g_loss).backward()
 
         nn.utils.clip_grad_norm_(
             filter(lambda p: p.requires_grad, self.generator.parameters()),
             self.train_cfg["grad_clip_threshold"],
         )
-        self.optimizer_g.step()
+        self.scaler_g.step(self.optimizer_g)
+        self.scaler_g.update()
 
         return {**d_stats, **g_stats}
 
