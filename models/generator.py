@@ -115,6 +115,10 @@ class LyreVoiceGenerator(nn.Module):
         # Load pretrained Tacotron2
         self.tacotron2 = self._load_tacotron2(gen_cfg["tacotron2_checkpoint"])
 
+        # Override decoder inference settings from config
+        self.tacotron2.decoder.gate_threshold = gen_cfg.get("gate_threshold", 0.5)
+        self.tacotron2.decoder.max_decoder_steps = gen_cfg.get("max_decoder_steps", 1000)
+
         # Speaker conditioning -- the only new trainable layer
         self.speaker_conditioning = SpeakerConditioningLayer(encoder_dim, speaker_dim)
 
