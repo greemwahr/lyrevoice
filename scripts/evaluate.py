@@ -160,9 +160,6 @@ def main():
     generator.load_state_dict(ckpt["generator_state_dict"])
     generator.eval()
     print(f"Loaded checkpoint: {args.checkpoint}")
-    # Debug: print a weight fingerprint to verify different checkpoints load different weights
-    spk_w = generator.speaker_conditioning.projection.weight
-    print(f"  Speaker conditioning weight checksum: {spk_w.sum().item():.6f}")
 
     # Load validation metadata
     meta_path = Path(config["data"]["preprocessed_path"]) / "vctk_metadata.txt"
@@ -181,15 +178,19 @@ def main():
     val_entries = all_entries[n_train:]
     eval_entries = val_entries[:num_samples]
 
-    # Output directories
+    # Output directories — per-epoch generated, shared reference
     output_dir = Path(eval_cfg["output_dir"])
-    generated_dir = output_dir / "generated"
+    ckpt_stem = Path(args.checkpoint).stem
+    generated_dir = output_dir / "generated" / ckpt_stem
     reference_dir = output_dir / "reference"
     generated_dir.mkdir(parents=True, exist_ok=True)
     reference_dir.mkdir(parents=True, exist_ok=True)
 
     sample_rate = config["audio"]["sample_rate"]
     similarity_scores = []
+
+    # Check if reference wavs already exist
+    refs_exist = (reference_dir / "sample_0000.wav").exists()
 
     print(f"\nGenerating {len(eval_entries)} samples...")
 
@@ -207,12 +208,13 @@ def main():
         gen_path = str(generated_dir / f"sample_{i:04d}.wav")
         sf.write(gen_path, audio_generated, sample_rate)
 
-        # Convert reference audio to WAV for FAD comparison
-        import librosa
+        # Convert reference audio to WAV (only on first run)
+        if not refs_exist:
+            import librosa
 
-        ref_out_path = str(reference_dir / f"sample_{i:04d}.wav")
-        ref_audio, ref_sr = librosa.load(entry["wav_path"], sr=sample_rate)
-        sf.write(ref_out_path, ref_audio, sample_rate)
+            ref_out_path = str(reference_dir / f"sample_{i:04d}.wav")
+            ref_audio, ref_sr = librosa.load(entry["wav_path"], sr=sample_rate)
+            sf.write(ref_out_path, ref_audio, sample_rate)
 
         # Speaker similarity
         sim = compute_speaker_similarity(audio_generated, ref_wavs, speaker_encoder, sample_rate)
