@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "mcp__aeb5ad12-0b16-4355-8113-8203f10098b2__read_me",
+      "mcp__aeb5ad12-0b16-4355-8113-8203f10098b2__create_view"
+    ]
+  }
+}
