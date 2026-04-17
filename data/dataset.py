@@ -165,7 +165,7 @@ class VCTKDataset(Dataset):
             "speaker_idx": torch.LongTensor([self.speaker_to_idx[spk]]),
             "ref_wav_paths": ref_wavs,
         }
-        if self.speaker_embeddings and spk in self.speaker_embeddings:
+        if self.speaker_embeddings is not None:
             result["speaker_embedding"] = self.speaker_embeddings[spk]
         return result
 
