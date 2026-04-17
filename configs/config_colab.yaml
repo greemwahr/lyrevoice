@@ -15,8 +15,11 @@ vocoder:
   config: /content/lyrevoice_data/pretrained/hifigan_config.json
 
 training:
-  batch_size: 128
-  num_workers: 4            # A100/H100 host CPUs can handle more workers
+  batch_size: 64
+  num_epochs: 150
+  learning_rate_generator: 0.00005
+  learning_rate_discriminator: 0.00005
+  num_workers: 4
 
 paths:
   checkpoints: /content/drive/MyDrive/lyrevoice/checkpoints
