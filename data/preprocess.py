@@ -269,11 +269,9 @@ def preprocess_speaker_embeddings(config: dict) -> None:
     encoder = SpeakerEncoder(device=torch.device("cpu"))
     speakers = sorted([d.name for d in wav_dir.iterdir() if d.is_dir()])
 
-    # Limit speakers if configured (use same seed as dataset.py for consistency)
-    max_speakers = data_cfg.get("max_speakers")
-    if max_speakers and len(speakers) > max_speakers:
-        random.seed(42)
-        speakers = sorted(random.sample(sorted(speakers), max_speakers))
+    # Always compute embeddings for ALL speakers — the dataset handles
+    # speaker limiting itself, and the selected speakers depend on the
+    # metadata file which may differ from the wav directory listing.
 
     print(f"Pre-computing speaker embeddings for {len(speakers)} speakers...")
 
