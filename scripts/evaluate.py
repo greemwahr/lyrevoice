@@ -204,11 +204,12 @@ def main():
         gen_path = str(generated_dir / f"sample_{i:04d}.wav")
         sf.write(gen_path, audio_generated, sample_rate)
 
-        # Copy reference audio for FAD comparison
-        import shutil
+        # Convert reference audio to WAV for FAD comparison
+        import librosa
 
         ref_out_path = str(reference_dir / f"sample_{i:04d}.wav")
-        shutil.copy(entry["wav_path"], ref_out_path)
+        ref_audio, ref_sr = librosa.load(entry["wav_path"], sr=sample_rate)
+        sf.write(ref_out_path, ref_audio, sample_rate)
 
         # Speaker similarity
         sim = compute_speaker_similarity(audio_generated, ref_wavs, speaker_encoder, sample_rate)
@@ -248,6 +249,9 @@ def main():
     if results_path.exists():
         with open(results_path) as f:
             all_results = json.load(f)
+        # Migrate from old dict format to list
+        if isinstance(all_results, dict):
+            all_results = [all_results]
     else:
         all_results = []
 
