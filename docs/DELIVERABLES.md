@@ -24,7 +24,7 @@
 
 ## 5. Creative and Practical Applications
 - [x] Prototype built — Gradio app (record 3 sentences, clone voice, speak any text)
-- [ ] Test the Gradio app end-to-end with a real checkpoint
+- [x] Test the Gradio app end-to-end with a real checkpoint
 - [x] Write up proposed applications — in Word report (accessibility, content creation, preservation, education, entertainment)
 
 ## 6. Ethical Considerations

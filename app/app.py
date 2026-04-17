@@ -173,7 +173,10 @@ SAMPLE_SENTENCES = [
 ]
 
 def build_ui() -> gr.Blocks:
-    with gr.Blocks(title="LyreVoice -- Voice Cloning", theme=gr.themes.Soft()) as demo:
+    with gr.Blocks(
+        title="LyreVoice -- Voice Cloning",
+        js="() => { document.querySelector('body').classList.add('dark'); }",
+    ) as demo:
 
         gr.Markdown("""
         # LyreVoice
@@ -253,7 +256,7 @@ def build_ui() -> gr.Blocks:
                     ["Today is a beautiful day. I hope you are doing well."],
                     ["The future of voice technology is here, and it sounds just like you."],
                 ],
-                inputs=text_input,
+                inputs=[text_input],
             )
 
         # ── About ─────────────────────────────────────────────────────────
@@ -313,6 +316,7 @@ def main():
         server_name=args.server_name,
         server_port=args.server_port,
         share=args.share,
+        theme=gr.themes.Default(primary_hue="blue"),
     )
 
 
