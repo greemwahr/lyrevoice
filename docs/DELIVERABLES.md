@@ -16,23 +16,26 @@
 - [x] Hyperparameter experimentation (2 runs: LR tuning, batch size changes, D LR reduction, lambda schedule)
 
 ## 4. Quality Assessment
-- [ ] Quantitative evaluation — run `evaluate.py` to get FAD + speaker cosine similarity scores
+- [ ] Quantitative evaluation — run `evaluate.py` on Colab to get FAD + speaker cosine similarity scores
 - [ ] Qualitative evaluation — listen to generated audio samples, include examples
-- [ ] Document how modifications affected quality — compare checkpoints across training runs, show impact of architecture/hyperparameter changes
+- [ ] Document how modifications affected quality — compare checkpoints across training runs
+- [ ] Fill in evaluation results placeholders in Word report
 
 ## 5. Creative and Practical Applications
 - [x] Prototype built — Gradio app (record 3 sentences, clone voice, speak any text)
 - [ ] Test the Gradio app end-to-end with a real checkpoint
-- [ ] Write up proposed applications — accessibility, content creation, etc.
+- [x] Write up proposed applications — in Word report (accessibility, content creation, preservation, education, entertainment)
 
 ## 6. Ethical Considerations
-- [ ] Write discussion on: data privacy, deepfake/deceptive media risks, impact on voice actors/creative industries
+- [x] Written in Word report — data privacy, deepfake risks, creative industries impact, mitigations
 
 ## 7. Report and Presentation
-- [ ] Project report — methodology, architecture decisions, experiments, results, conclusions
-- [ ] Presentation — slides for class showcase with generated audio examples
+- [x] Project report — `report/LyreVoice_Project_Report.docx` (Candara 12pt, all sections)
+- [x] Presentation outline — `report/presentation_outline.md` (18 slides)
+- [x] Architecture diagram — `report/lyrevoice_architecture.png` embedded in Word report Appendix B
+- [ ] Presentation slides — convert outline to actual slides (PowerPoint/Google Slides)
 
 ## Submission Requirements
 - [x] Complete source code with run instructions (RUNBOOK.md exists)
-- [ ] Detailed project report
-- [ ] Presentation slides
+- [x] Detailed project report (Word doc in `report/`)
+- [ ] Presentation slides (need actual .pptx or Google Slides)
