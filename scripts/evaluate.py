@@ -13,33 +13,45 @@ Usage:
 """
 
 import argparse
+import json
 import os
 import sys
-import yaml
-import json
-import torch
+from pathlib import Path
+
 import numpy as np
 import soundfile as sf
-from pathlib import Path
-from tqdm import tqdm
+import torch
 import torch.nn.functional as F
+import yaml
+from tqdm import tqdm
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from models.generator import LyreVoiceGenerator, text_to_sequence
+from data.dataset import load_metadata
+from models.generator import LyreVoiceGenerator
 from models.speaker_encoder import SpeakerEncoder
 from models.vocoder import Vocoder
-from data.dataset import load_metadata
 
 
 def load_config(config_path: str) -> dict:
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         return yaml.safe_load(f)
+
+
+def deep_merge(base: dict, override: dict) -> dict:
+    """Recursively merge override into base."""
+    for key, value in override.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            deep_merge(base[key], value)
+        else:
+            base[key] = value
+    return base
 
 
 # ─────────────────────────────────────────────
 # Metric: Speaker Cosine Similarity
 # ─────────────────────────────────────────────
+
 
 def compute_speaker_similarity(
     generated_audio: np.ndarray,
@@ -66,10 +78,10 @@ def compute_speaker_similarity(
     return max(0.0, cosine_sim)
 
 
-
 # ─────────────────────────────────────────────
 # Metric: FAD (Fréchet Audio Distance)
 # ─────────────────────────────────────────────
+
 
 def compute_fad(generated_dir: str, reference_dir: str) -> float:
     """
@@ -78,6 +90,7 @@ def compute_fad(generated_dir: str, reference_dir: str) -> float:
     """
     try:
         from frechet_audio_distance import FrechetAudioDistance
+
         fad = FrechetAudioDistance(use_pca=False, use_activation=False, verbose=True)
         score = fad.score(generated_dir, reference_dir)
         return score
@@ -91,6 +104,7 @@ def compute_fad(generated_dir: str, reference_dir: str) -> float:
 # ─────────────────────────────────────────────
 # Main evaluation loop
 # ─────────────────────────────────────────────
+
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate LyreVoice model")
@@ -107,6 +121,12 @@ def main():
         help="Path to config YAML file",
     )
     parser.add_argument(
+        "--config-override",
+        type=str,
+        default=None,
+        help="Path to override config YAML (merged on top of base config)",
+    )
+    parser.add_argument(
         "--num_samples",
         type=int,
         default=None,
@@ -115,6 +135,9 @@ def main():
     args = parser.parse_args()
 
     config = load_config(args.config)
+    if args.config_override:
+        override = load_config(args.config_override)
+        config = deep_merge(config, override)
     eval_cfg = config["evaluation"]
     num_samples = args.num_samples or eval_cfg["num_samples"]
 
@@ -175,13 +198,12 @@ def main():
 
         # Copy reference audio for FAD comparison
         import shutil
+
         ref_out_path = str(reference_dir / f"sample_{i:04d}.wav")
         shutil.copy(entry["wav_path"], ref_out_path)
 
         # Speaker similarity
-        sim = compute_speaker_similarity(
-            audio_generated, ref_wavs, speaker_encoder, sample_rate
-        )
+        sim = compute_speaker_similarity(audio_generated, ref_wavs, speaker_encoder, sample_rate)
         similarity_scores.append(sim)
 
     # ── Compute metrics ──────────────────────────────────────────────────
