@@ -231,9 +231,11 @@ def main():
 
     print("=" * 50)
 
-    # Save results to JSON
-    results = {
+    # Save results to JSON — append to results.json so multiple epochs accumulate
+    ckpt_stem = Path(args.checkpoint).stem
+    result_entry = {
         "checkpoint": args.checkpoint,
+        "epoch": ckpt_stem,
         "num_samples": len(eval_entries),
         "speaker_cosine_similarity": {
             "mean": float(mean_sim),
@@ -243,8 +245,18 @@ def main():
     }
 
     results_path = output_dir / "results.json"
+    if results_path.exists():
+        with open(results_path) as f:
+            all_results = json.load(f)
+    else:
+        all_results = []
+
+    # Replace existing entry for same epoch, or append
+    all_results = [r for r in all_results if r.get("epoch") != ckpt_stem]
+    all_results.append(result_entry)
+
     with open(results_path, "w") as f:
-        json.dump(results, f, indent=2)
+        json.dump(all_results, f, indent=2)
     print(f"\nResults saved to {results_path}")
 
 
