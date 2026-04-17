@@ -160,6 +160,9 @@ def main():
     generator.load_state_dict(ckpt["generator_state_dict"])
     generator.eval()
     print(f"Loaded checkpoint: {args.checkpoint}")
+    # Debug: print a weight fingerprint to verify different checkpoints load different weights
+    spk_w = generator.speaker_conditioning.projection.weight
+    print(f"  Speaker conditioning weight checksum: {spk_w.sum().item():.6f}")
 
     # Load validation metadata
     meta_path = Path(config["data"]["preprocessed_path"]) / "vctk_metadata.txt"
