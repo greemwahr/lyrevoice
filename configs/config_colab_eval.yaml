@@ -1,0 +1,16 @@
+# Colab evaluation config — reads directly from Google Drive (no extraction needed)
+# Usage: python scripts/evaluate.py --config configs/config.yaml --config-override configs/config_colab_eval.yaml
+
+data:
+  vctk_path: /content/drive/MyDrive/lyrevoice
+  preprocessed_path: /content/drive/MyDrive/lyrevoice/preprocessed
+
+vocoder:
+  checkpoint: /content/drive/MyDrive/lyrevoice/pretrained/hifigan_generator.pt
+  config: /content/drive/MyDrive/lyrevoice/pretrained/hifigan_config.json
+
+generator:
+  tacotron2_checkpoint: /content/drive/MyDrive/lyrevoice/pretrained/tacotron2_statedict.pt
+
+evaluation:
+  output_dir: /content/drive/MyDrive/lyrevoice/eval_outputs
