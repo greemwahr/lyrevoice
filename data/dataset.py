@@ -100,9 +100,24 @@ class VCTKDataset(Dataset):
             spk = entry["speaker"]
             speaker_to_entries.setdefault(spk, []).append(entry)
 
+        # Load pre-computed speaker embeddings if available
+        emb_path = Path(self.data_cfg["preprocessed_path"]) / "speaker_embeddings.pt"
+        if emb_path.exists():
+            self.speaker_embeddings = torch.load(str(emb_path), weights_only=True)
+            print(f"  Loaded pre-computed speaker embeddings from {emb_path}")
+        else:
+            self.speaker_embeddings = None
+            print(f"  WARNING: No pre-computed embeddings at {emb_path}, using live encoder")
+
         # Limit number of speakers if configured
+        # If pre-computed embeddings exist, use those speakers to avoid mismatch
         max_speakers = self.data_cfg.get("max_speakers")
-        if max_speakers and len(speaker_to_entries) > max_speakers:
+        if self.speaker_embeddings is not None and max_speakers and len(speaker_to_entries) > max_speakers:
+            selected = set(self.speaker_embeddings.keys()) & set(speaker_to_entries.keys())
+            if len(selected) > max_speakers:
+                selected = sorted(selected)[:max_speakers]
+            speaker_to_entries = {s: speaker_to_entries[s] for s in selected}
+        elif max_speakers and len(speaker_to_entries) > max_speakers:
             all_spks = sorted(speaker_to_entries.keys())
             random.seed(42)
             selected = random.sample(all_spks, max_speakers)
@@ -128,15 +143,6 @@ class VCTKDataset(Dataset):
 
         self.speakers = sorted(speaker_to_entries.keys())
         self.speaker_to_idx = {spk: i for i, spk in enumerate(self.speakers)}
-
-        # Load pre-computed speaker embeddings if available
-        emb_path = Path(self.data_cfg["preprocessed_path"]) / "speaker_embeddings.pt"
-        if emb_path.exists():
-            self.speaker_embeddings = torch.load(str(emb_path), weights_only=True)
-            print(f"  Loaded pre-computed speaker embeddings from {emb_path}")
-        else:
-            self.speaker_embeddings = None
-            print(f"  WARNING: No pre-computed embeddings at {emb_path}, using live encoder")
 
         print(f"VCTKDataset [{split}]: {len(self.entries)} utterances, "
               f"{len(self.speakers)} speakers")
