@@ -18,6 +18,7 @@
 ## 4. Quality Assessment
 - [ ] Quantitative evaluation — run `evaluate.py` on Colab to get FAD + speaker cosine similarity scores
 - [ ] Qualitative evaluation — listen to generated audio samples, include examples
+- [x] WandB training charts added to report (G/D loss, loss components, D scores, lambda schedule)
 - [ ] Document how modifications affected quality — compare checkpoints across training runs
 - [ ] Fill in evaluation results placeholders in Word report
 
