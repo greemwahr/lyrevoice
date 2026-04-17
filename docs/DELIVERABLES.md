@@ -34,9 +34,9 @@
 - [x] Project report — `report/LyreVoice_Project_Report.docx` (Candara 12pt, all sections)
 - [x] Presentation outline — `report/presentation_outline.md` (18 slides)
 - [x] Architecture diagram — `report/lyrevoice_architecture.png` embedded in Word report Appendix B
-- [ ] Presentation slides — convert outline to actual slides (PowerPoint/Google Slides)
+- [x] Presentation slides — convert outline to actual slides (PowerPoint/Google Slides)
 
 ## Submission Requirements
 - [x] Complete source code with run instructions (RUNBOOK.md exists)
 - [x] Detailed project report (Word doc in `report/`)
-- [ ] Presentation slides (need actual .pptx or Google Slides)
+- [x] Presentation slides
