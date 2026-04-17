@@ -165,6 +165,14 @@ def main():
     meta_path = Path(config["data"]["preprocessed_path"]) / "vctk_metadata.txt"
     all_entries = load_metadata(str(meta_path))
 
+    # Remap wav_path: metadata stores local paths (data/datasets/VCTK-Corpus/...)
+    # but on Colab the wavs live under config's vctk_path
+    vctk_path = config["data"]["vctk_path"]
+    for entry in all_entries:
+        raw = entry["wav_path"]
+        suffix = raw.split("VCTK-Corpus/", 1)[-1] if "VCTK-Corpus/" in raw else raw
+        entry["wav_path"] = str(Path(vctk_path) / suffix)
+
     # Use last 5% as validation (matching dataset.py split)
     n_train = int(len(all_entries) * config["data"]["train_split"])
     val_entries = all_entries[n_train:]
