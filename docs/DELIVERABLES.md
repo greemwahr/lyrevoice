@@ -16,11 +16,11 @@
 - [x] Hyperparameter experimentation (2 runs: LR tuning, batch size changes, D LR reduction, lambda schedule)
 
 ## 4. Quality Assessment
-- [ ] Quantitative evaluation — run `evaluate.py` on Colab to get FAD + speaker cosine similarity scores
-- [ ] Qualitative evaluation — listen to generated audio samples, include examples
+- [x] Quantitative evaluation — FAD + speaker cosine similarity for epochs 50, 100, 150 (best: epoch 100, FAD=63.64, sim=0.419)
+- [x] Qualitative evaluation — observations on generated audio written in report Section 5.2
 - [x] WandB training charts added to report (G/D loss, loss components, D scores, lambda schedule)
-- [ ] Document how modifications affected quality — compare checkpoints across training runs
-- [ ] Fill in evaluation results placeholders in Word report
+- [x] Document how modifications affected quality — impact table in Section 5.3, compromises/learnings in Section 4.5
+- [x] Fill in evaluation results placeholders in Word report
 
 ## 5. Creative and Practical Applications
 - [x] Prototype built — Gradio app (record 3 sentences, clone voice, speak any text)
