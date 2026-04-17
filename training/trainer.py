@@ -72,14 +72,8 @@ class Trainer:
         self.discriminator = MultiScaleDiscriminator(config).to(self.device)
         self.vocoder = Vocoder(config, device=self.device)
 
-        # torch.compile -- fuses CUDA kernels for ~10-30% speedup on A100/H100
-        if self.device.type == "cuda":
-            try:
-                self.generator = torch.compile(self.generator)
-                self.discriminator = torch.compile(self.discriminator)
-                print("Models compiled with torch.compile()")
-            except Exception as e:
-                print(f"torch.compile() not available: {e}")
+        # NOTE: torch.compile() disabled — NVIDIA Tacotron2 uses .item() calls
+        # that cause excessive graph breaks, making compilation slower than eager mode.
 
         # Losses
         self.d_loss_fn = LSGANDiscriminatorLoss()
